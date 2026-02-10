@@ -130,10 +130,10 @@ Museum Companion/
 ### Configuration
 
 #### Gemini API
-The Gemini API key is already configured in `GeminiService.swift`:
-```swift
-private let apiKey = "AIzaSyBY-nXv11y61eQOrqhZHo4Maau1gCc6AOA"
-```
+Configure your Gemini API key as an environment variable in Xcode:
+1. Edit Scheme → Run → Arguments → Environment Variables
+2. Add `GEMINI_API_KEY` with your API key value
+3. Get your key from: https://aistudio.google.com/app/apikey
 
 #### StoreKit Configuration
 1. Create a StoreKit configuration file in Xcode

@@ -21,7 +21,7 @@ Follow these simple steps to get the app running:
    
 ### 3. Add Your API Key
    - **Name:** `GEMINI_API_KEY`
-   - **Value:** `AIzaSyBY-nXv11y61eQOrqhZHo4Maau1gCc6AOA`
+   - **Value:** `YOUR_API_KEY_HERE` (Get your key from https://aistudio.google.com/app/apikey)
    
 ### 4. Close and Build
    - Click **"Close"**
