@@ -57,7 +57,9 @@ class SimpleScanViewModel: NSObject, ObservableObject {
     
     @objc private func appWillTerminate() {
         print("🔴 App will terminate - cleaning up camera")
-        cleanupSession()
+        Task { @MainActor in
+            cleanupSession()
+        }
     }
     
     deinit {
@@ -68,30 +70,33 @@ class SimpleScanViewModel: NSObject, ObservableObject {
         cleanupSession()
     }
     
-    private func cleanupSession() {
-        guard let session = captureSession else { return }
-        
-        // Stop session on background queue to avoid blocking
-        let cleanupQueue = DispatchQueue(label: "camera.cleanup", qos: .userInitiated)
-        cleanupQueue.sync {
-            if session.isRunning {
-                session.stopRunning()
+    nonisolated private func cleanupSession() {
+        // Access MainActor-isolated properties safely
+        MainActor.assumeIsolated {
+            guard let session = self.captureSession else { return }
+            
+            // Stop session on background queue to avoid blocking
+            let cleanupQueue = DispatchQueue(label: "camera.cleanup", qos: .userInitiated)
+            cleanupQueue.sync {
+                if session.isRunning {
+                    session.stopRunning()
+                }
+                
+                // Properly remove all inputs and outputs
+                session.beginConfiguration()
+                for input in session.inputs {
+                    session.removeInput(input)
+                }
+                for output in session.outputs {
+                    session.removeOutput(output)
+                }
+                session.commitConfiguration()
             }
             
-            // Properly remove all inputs and outputs
-            session.beginConfiguration()
-            for input in session.inputs {
-                session.removeInput(input)
-            }
-            for output in session.outputs {
-                session.removeOutput(output)
-            }
-            session.commitConfiguration()
+            self.captureSession = nil
+            self.photoOutput = nil
+            self.isCameraSetup = false
         }
-        
-        captureSession = nil
-        photoOutput = nil
-        isCameraSetup = false
     }
     
     func setupCameraIfNeeded() {

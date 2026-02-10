@@ -15,8 +15,15 @@ final class GeminiService {
     private let baseURL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
     
     private init() {
-        // API key is now loaded from Config (which reads from xcconfig or environment)
-        self.apiKey = Config.geminiAPIKey
+        // API key is now loaded from AppConfig (which reads from xcconfig or environment)
+        let key = AppConfig.geminiAPIKey
+        if key.isEmpty {
+            print("❌ ERROR: Gemini API key is not configured!")
+            print("   Please set GEMINI_API_KEY environment variable in Xcode:")
+            print("   Edit Scheme → Run → Arguments → Environment Variables")
+            print("   Get your key from: https://aistudio.google.com/app/apikey")
+        }
+        self.apiKey = key
     }
     
     // MARK: - List Available Models (for debugging)
@@ -130,10 +137,26 @@ final class GeminiService {
             print("URL: \(request.url?.absoluteString ?? "unknown")")
             if let errorString = String(data: data, encoding: .utf8) {
                 print("Error response: \(errorString)")
+                
+                // Check for API key errors and provide helpful message
+                if errorString.contains("API_KEY_INVALID") || errorString.contains("API Key not found") {
+                    print("\n🔑 API Key Error Detected!")
+                    print("   Your Gemini API key is invalid or not configured.")
+                    print("   To fix this:")
+                    print("   1. Get a valid API key from: https://aistudio.google.com/app/apikey")
+                    print("   2. In Xcode: Edit Scheme → Run → Arguments → Environment Variables")
+                    print("   3. Add GEMINI_API_KEY with your valid API key value")
+                    print("   4. Rebuild and run the app\n")
+                }
             }
         }
         
         guard httpResponse.statusCode == 200 else {
+            // Provide more specific error for API key issues
+            if httpResponse.statusCode == 400, let errorString = String(data: data, encoding: .utf8),
+               (errorString.contains("API_KEY_INVALID") || errorString.contains("API Key not found")) {
+                throw GeminiError.apiKeyInvalid
+            }
             throw GeminiError.httpError(statusCode: httpResponse.statusCode)
         }
         
@@ -270,6 +293,7 @@ enum GeminiError: LocalizedError {
     case noResponse
     case decodingFailed
     case networkError
+    case apiKeyInvalid
     
     var errorDescription: String? {
         switch self {
@@ -287,6 +311,8 @@ enum GeminiError: LocalizedError {
             return "Failed to understand the response. Please try again."
         case .networkError:
             return "Network connection failed. Please check your internet connection."
+        case .apiKeyInvalid:
+            return "API key is invalid or not configured. Please check your GEMINI_API_KEY environment variable in Xcode scheme settings."
         }
     }
 }

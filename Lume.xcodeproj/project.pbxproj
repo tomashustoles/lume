@@ -7,8 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		35C60AA22F2C2021002C86C0 /* Config.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35BC2C542F2B972D00774EBA /* Config.swift */; };
-		35C60AA42F2CA25B002C86C0 /* Config.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35BC2C542F2B972D00774EBA /* Config.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -31,7 +29,6 @@
 /* Begin PBXFileReference section */
 		35BC2BF32F2994B700774EBA /* LumeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LumeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		35BC2BFD2F2994B700774EBA /* LumeUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LumeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		35BC2C542F2B972D00774EBA /* Config.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Config.swift; sourceTree = "<group>"; };
 		35BC2C562F2B973800774EBA /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 		35BC2C582F2B974000774EBA /* Secrets.xcconfig.template */ = {isa = PBXFileReference; lastKnownFileType = text; path = Secrets.xcconfig.template; sourceTree = "<group>"; };
 		35BC2C5A2F2B974400774EBA /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
@@ -122,7 +119,6 @@
 				35C60A342F2C09A0002C86C0 /* LumeTests */,
 				35C60A3E2F2C09A0002C86C0 /* LumeUITests */,
 				35BC2BE72F2994B600774EBA /* Products */,
-				35BC2C542F2B972D00774EBA /* Config.swift */,
 				35BC2C562F2B973800774EBA /* .gitignore */,
 				35BC2C582F2B974000774EBA /* Secrets.xcconfig.template */,
 				35BC2C5A2F2B974400774EBA /* Secrets.xcconfig */,
@@ -284,7 +280,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				35C60AA22F2C2021002C86C0 /* Config.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -299,7 +294,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				35C60AA42F2CA25B002C86C0 /* Config.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
