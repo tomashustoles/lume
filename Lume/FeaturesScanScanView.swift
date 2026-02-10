@@ -207,6 +207,13 @@ struct ScanView: View {
             let availableSpace = geometry.size.height - squareBottom
             let buttonYPosition = squareBottom + (availableSpace / 2)
             
+            // Calculate safe position with padding from left edge
+            let buttonRadius: CGFloat = 25 // Half of button width (50/2)
+            let padding: CGFloat = 20 // Padding from screen edge
+            let minXPosition = buttonRadius + padding
+            let preferredXPosition = squareLeft - 40
+            let safeXPosition = max(minXPosition, preferredXPosition)
+            
             PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
                 ZStack {
                     Image(systemName: "photo.on.rectangle")
@@ -218,7 +225,7 @@ struct ScanView: View {
             }
             .disabled(viewModel.isProcessing || isAnalyzing)
             .opacity((viewModel.isProcessing || isAnalyzing) ? 0.5 : 1.0)
-            .position(x: squareLeft - 40, y: buttonYPosition)
+            .position(x: safeXPosition, y: buttonYPosition)
         }
     }
     

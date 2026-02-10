@@ -109,6 +109,23 @@ struct SimpleCameraView: View {
         } message: {
             Text("You've used all 3 daily scans. The limit resets at midnight.")
         }
+        .sheet(isPresented: $viewModel.showResult) {
+            if let artwork = viewModel.recognizedArtwork {
+                ArtworkDetailView(
+                    artwork: artwork,
+                    onDismiss: {
+                        viewModel.showResult = false
+                        viewModel.recognizedArtwork = nil
+                    },
+                    onNavigateToCollection: {
+                        // Navigate to collection tab if needed
+                        viewModel.showResult = false
+                        viewModel.recognizedArtwork = nil
+                    }
+                )
+                .environmentObject(historyManager)
+            }
+        }
     }
 }
 

@@ -19,9 +19,36 @@ class HistoryManager: ObservableObject {
     private var container: CKContainer? = nil
     
     private let localStorageKey = "savedArtworks"
+    private let imagesDirectory: URL
     
     init() {
+        // Create directory for storing artwork images
+        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        imagesDirectory = documentsPath.appendingPathComponent("ArtworkImages", isDirectory: true)
+        
+        // Create directory if it doesn't exist
+        try? FileManager.default.createDirectory(at: imagesDirectory, withIntermediateDirectories: true)
+        
         loadLocalData()
+        
+        // Migrate existing data if needed (one-time migration)
+        migrateIfNeeded()
+    }
+    
+    // MARK: - Migration
+    
+    private func migrateIfNeeded() {
+        // Check if we have artworks with image data still in memory (from old storage)
+        // If so, save them to files and update UserDefaults
+        let needsMigration = artworks.contains { artwork in
+            artwork.imageData != nil || artwork.capturedImageData != nil
+        }
+        
+        if needsMigration {
+            print("🔄 Migrating artwork images from UserDefaults to file storage...")
+            saveLocalData() // This will save images to files and remove from UserDefaults
+            print("✅ Migration complete")
+        }
     }
     
     // MARK: - Add Artwork
@@ -56,6 +83,13 @@ class HistoryManager: ObservableObject {
     
     func deleteArtwork(_ artwork: Artwork) async {
         artworks.removeAll { $0.id == artwork.id }
+        
+        // Delete associated image files
+        let imageURL = imageFileURL(for: artwork.id)
+        let capturedImageURL = capturedImageFileURL(for: artwork.id)
+        try? FileManager.default.removeItem(at: imageURL)
+        try? FileManager.default.removeItem(at: capturedImageURL)
+        
         saveLocalData()
         await deleteFromCloud(artwork)
     }
@@ -89,7 +123,50 @@ class HistoryManager: ObservableObject {
         }
         
         do {
-            artworks = try JSONDecoder().decode([Artwork].self, from: data)
+            // Decode artworks without image data
+            let loadedArtworksMetadata = try JSONDecoder().decode([Artwork].self, from: data)
+            
+            // Reconstruct artworks with image data loaded from files
+            var loadedArtworks: [Artwork] = []
+            
+            for artworkMetadata in loadedArtworksMetadata {
+                // Load image data from files
+                var imageData: Data? = nil
+                var capturedImageData: Data? = nil
+                
+                let imageURL = imageFileURL(for: artworkMetadata.id)
+                if FileManager.default.fileExists(atPath: imageURL.path),
+                   let data = try? Data(contentsOf: imageURL) {
+                    imageData = data
+                }
+                
+                let capturedImageURL = capturedImageFileURL(for: artworkMetadata.id)
+                if FileManager.default.fileExists(atPath: capturedImageURL.path),
+                   let data = try? Data(contentsOf: capturedImageURL) {
+                    capturedImageData = data
+                }
+                
+                // Reconstruct artwork with image data
+                let artwork = Artwork(
+                    id: artworkMetadata.id,
+                    title: artworkMetadata.title,
+                    artist: artworkMetadata.artist,
+                    year: artworkMetadata.year,
+                    movement: artworkMetadata.movement,
+                    description: artworkMetadata.description,
+                    storyMode: artworkMetadata.storyMode,
+                    culturalContext: artworkMetadata.culturalContext,
+                    estimatedPeriod: artworkMetadata.estimatedPeriod,
+                    frameStyle: artworkMetadata.frameStyle,
+                    imageData: imageData,
+                    capturedImageData: capturedImageData,
+                    timestamp: artworkMetadata.timestamp,
+                    isFavorite: artworkMetadata.isFavorite
+                )
+                loadedArtworks.append(artwork)
+            }
+            
+            artworks = loadedArtworks
             print("✅ Loaded \(artworks.count) artworks from local storage")
         } catch {
             print("❌ Failed to load local artworks: \(error)")
@@ -101,12 +178,57 @@ class HistoryManager: ObservableObject {
     
     private func saveLocalData() {
         do {
-            let data = try JSONEncoder().encode(artworks)
+            // Save image data to files and create artworks without image data for UserDefaults
+            var artworksForStorage: [Artwork] = []
+            
+            for artwork in artworks {
+                // Save image data to files
+                if let imageData = artwork.imageData {
+                    let imageURL = imageFileURL(for: artwork.id)
+                    try? imageData.write(to: imageURL)
+                }
+                if let capturedImageData = artwork.capturedImageData {
+                    let capturedImageURL = capturedImageFileURL(for: artwork.id)
+                    try? capturedImageData.write(to: capturedImageURL)
+                }
+                
+                // Create a copy without image data for UserDefaults storage
+                let artworkForStorage = Artwork(
+                    id: artwork.id,
+                    title: artwork.title,
+                    artist: artwork.artist,
+                    year: artwork.year,
+                    movement: artwork.movement,
+                    description: artwork.description,
+                    storyMode: artwork.storyMode,
+                    culturalContext: artwork.culturalContext,
+                    estimatedPeriod: artwork.estimatedPeriod,
+                    frameStyle: artwork.frameStyle,
+                    imageData: nil, // Don't store in UserDefaults
+                    capturedImageData: nil, // Don't store in UserDefaults
+                    timestamp: artwork.timestamp,
+                    isFavorite: artwork.isFavorite
+                )
+                artworksForStorage.append(artworkForStorage)
+            }
+            
+            // Save metadata to UserDefaults (without image data)
+            let data = try JSONEncoder().encode(artworksForStorage)
             UserDefaults.standard.set(data, forKey: localStorageKey)
-            print("✅ Saved \(artworks.count) artworks to local storage")
+            print("✅ Saved \(artworks.count) artworks to local storage (metadata only, images in files)")
         } catch {
             print("❌ Failed to save local artworks: \(error)")
         }
+    }
+    
+    // MARK: - File Storage Helpers
+    
+    private func imageFileURL(for artworkID: UUID) -> URL {
+        return imagesDirectory.appendingPathComponent("\(artworkID.uuidString).jpg")
+    }
+    
+    private func capturedImageFileURL(for artworkID: UUID) -> URL {
+        return imagesDirectory.appendingPathComponent("\(artworkID.uuidString)_captured.jpg")
     }
     
     // MARK: - CloudKit Sync

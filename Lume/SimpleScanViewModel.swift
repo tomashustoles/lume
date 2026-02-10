@@ -19,6 +19,8 @@ class SimpleScanViewModel: NSObject, ObservableObject {
     @Published var showLimitReached = false
     @Published var showPaywall = false
     @Published var isScanningEnabled = true
+    @Published var recognizedArtwork: Artwork?
+    @Published var showResult = false
     
     private(set) var captureSession: AVCaptureSession?
     private var photoOutput: AVCapturePhotoOutput?
@@ -193,6 +195,12 @@ class SimpleScanViewModel: NSObject, ObservableObject {
     ) async {
         print("🔵 capturePhoto called - isProUser: \(isProUser)")
         
+        // Don't allow capture if already processing or showing result
+        guard !isProcessing, !showResult else {
+            print("⚠️ Already processing or showing result, ignoring capture request")
+            return
+        }
+        
         // Store for later use
         pendingIsProUser = isProUser
         
@@ -272,14 +280,25 @@ class SimpleScanViewModel: NSObject, ObservableObject {
             // Send to Gemini
             let result = try await geminiService.recognizeArtwork(image: croppedImage)
             
-            // Try to fetch the real artwork image
+            // Always save the captured image
+            let capturedImageData = croppedImage.jpegData(compressionQuality: 0.8)
+            
+            // Try to fetch the real artwork image (non-blocking, don't fail if it doesn't work)
             var finalImageData: Data?
-            if let realImage = try await geminiService.fetchArtworkImage(title: result.title, artist: result.artist) {
-                // Use the real artwork image
-                finalImageData = realImage.jpegData(compressionQuality: 0.8)
-            } else {
-                // Fall back to the captured image if we can't find the real one
-                finalImageData = croppedImage.jpegData(compressionQuality: 0.8)
+            do {
+                if let realImage = try await geminiService.fetchArtworkImage(title: result.title, artist: result.artist) {
+                    // Use the real artwork image
+                    finalImageData = realImage.jpegData(compressionQuality: 0.8)
+                    print("✅ Using fetched artwork image")
+                } else {
+                    // Fall back to the captured image if we can't find the real one
+                    finalImageData = capturedImageData
+                    print("⚠️ Using captured image as fallback (artwork image not found)")
+                }
+            } catch {
+                // If image fetch fails, just use captured image
+                print("⚠️ Image fetch failed: \(error.localizedDescription), using captured image")
+                finalImageData = capturedImageData
             }
             
             // Save to history
@@ -293,12 +312,24 @@ class SimpleScanViewModel: NSObject, ObservableObject {
                 culturalContext: result.culturalContext,
                 estimatedPeriod: result.estimatedPeriod,
                 frameStyle: determineFrameStyle(from: result.estimatedPeriod),
-                imageData: finalImageData
+                imageData: finalImageData,
+                capturedImageData: capturedImageData // Always save captured image
             )
             
             await historyManager.addArtwork(artwork)
             
+            // Set recognized artwork and show sheet
+            recognizedArtwork = artwork
             isProcessing = false
+            
+            // Small delay to ensure UI is ready before showing sheet
+            // Also check that we're not already showing a result
+            try? await Task.sleep(for: .milliseconds(300))
+            if !showResult {
+                showResult = true
+            } else {
+                print("⚠️ Sheet already showing, skipping presentation")
+            }
             
             // Haptic feedback
             let generator = UINotificationFeedbackGenerator()
@@ -306,6 +337,16 @@ class SimpleScanViewModel: NSObject, ObservableObject {
             
         } catch {
             isProcessing = false
+            recognizedArtwork = nil
+            showResult = false
+            
+            // Log detailed error information
+            print("❌ Error in processImage: \(error)")
+            if let geminiError = error as? GeminiError {
+                print("❌ GeminiError type: \(geminiError)")
+            }
+            print("❌ Error description: \(error.localizedDescription)")
+            
             errorMessage = error.localizedDescription
             showError = true
             
