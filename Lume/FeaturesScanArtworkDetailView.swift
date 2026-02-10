@@ -8,13 +8,14 @@
 import SwiftUI
 
 struct ArtworkDetailView: View {
+    @Environment(\.colorScheme) private var colorScheme
     let artwork: Artwork
     let onDismiss: () -> Void
     let onNavigateToCollection: (() -> Void)?
     
     @EnvironmentObject var historyManager: HistoryManager
     @State private var isFavorite: Bool
-    @State private var realArtworkImage: UIImage?
+    @State private var displayImage: UIImage?
     @State private var isFetchingImage = false
     
     init(artwork: Artwork, onDismiss: @escaping () -> Void, onNavigateToCollection: (() -> Void)? = nil) {
@@ -22,13 +23,11 @@ struct ArtworkDetailView: View {
         self.onDismiss = onDismiss
         self.onNavigateToCollection = onNavigateToCollection
         _isFavorite = State(initialValue: artwork.isFavorite)
-        // Pre-load from stored imageData if available
-        if let data = artwork.imageData, let img = UIImage(data: data) {
-            _realArtworkImage = State(initialValue: img)
-        }
     }
     
     var body: some View {
+        let _ = print("🎨 ArtworkDetailView rendering - Title: '\(artwork.title)', Artist: '\(artwork.artist)', ImageData exists: \(artwork.imageData != nil), DisplayImage exists: \(displayImage != nil)")
+        
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
@@ -45,12 +44,13 @@ struct ArtworkDetailView: View {
                         // Info description
                         VStack(alignment: .leading, spacing: 12) {
                             Text("About the Artwork")
-                                .font(.system(size: 20, weight: .semibold))
-                                .foregroundColor(.primary)
+                                .font(.system(.body))
+                                .fontWeight(.semibold)
+                                .foregroundColor(colorScheme == .dark ? .white : .black)
                             
                             Text(artwork.description)
-                                .font(.system(size: 16))
-                                .foregroundColor(.secondary)
+                                .font(.system(.subheadline))
+                                .foregroundColor(colorScheme == .dark ? Color.white.opacity(0.7) : Color.black.opacity(0.7))
                                 .lineSpacing(6)
                         }
                         
@@ -59,12 +59,13 @@ struct ArtworkDetailView: View {
                         // Story
                         VStack(alignment: .leading, spacing: 12) {
                             Text("The Story")
-                                .font(.system(size: 20, weight: .semibold))
-                                .foregroundColor(.primary)
+                                .font(.system(.body))
+                                .fontWeight(.semibold)
+                                .foregroundColor(colorScheme == .dark ? .white : .black)
                             
                             Text(artwork.storyMode)
-                                .font(.system(size: 16, design: .serif))
-                                .foregroundColor(.secondary)
+                                .font(.system(.subheadline))
+                                .foregroundColor(colorScheme == .dark ? Color.white.opacity(0.7) : Color.black.opacity(0.7))
                                 .lineSpacing(8)
                                 .italic()
                         }
@@ -74,12 +75,13 @@ struct ArtworkDetailView: View {
                         // Cultural Context
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Cultural Context")
-                                .font(.system(size: 20, weight: .semibold))
-                                .foregroundColor(.primary)
+                                .font(.system(.body))
+                                .fontWeight(.semibold)
+                                .foregroundColor(colorScheme == .dark ? .white : .black)
                             
                             Text(artwork.culturalContext)
-                                .font(.system(size: 16))
-                                .foregroundColor(.secondary)
+                                .font(.system(.subheadline))
+                                .foregroundColor(colorScheme == .dark ? Color.white.opacity(0.7) : Color.black.opacity(0.7))
                                 .lineSpacing(6)
                         }
                         
@@ -94,17 +96,19 @@ struct ArtworkDetailView: View {
                             } label: {
                                 HStack {
                                     Image(systemName: "photo.stack")
-                                        .font(.system(size: 20))
+                                        .font(.system(.title3))
                                     Text("Scanned Images")
-                                        .font(.system(size: 17, weight: .medium))
+                                        .font(.system(.body))
+                                        .fontWeight(.medium)
                                     Spacer()
                                     Image(systemName: "chevron.right")
-                                        .font(.system(size: 14, weight: .semibold))
-                                        .foregroundColor(.secondary)
+                                        .font(.system(.caption))
+                                        .fontWeight(.semibold)
+                                        .foregroundColor(colorScheme == .dark ? Color.white.opacity(0.4) : Color.black.opacity(0.4))
                                 }
-                                .foregroundColor(.primary)
+                                .foregroundColor(colorScheme == .dark ? .white : .black)
                                 .padding()
-                                .background(Color(.secondarySystemBackground))
+                                .background(colorScheme == .dark ? Color.white.opacity(0.1) : Color.black.opacity(0.05))
                                 .cornerRadius(12)
                             }
                             
@@ -114,17 +118,19 @@ struct ArtworkDetailView: View {
                             } label: {
                                 HStack {
                                     Image(systemName: "camera")
-                                        .font(.system(size: 20))
+                                        .font(.system(.title3))
                                     Text("Scan Next Artwork")
-                                        .font(.system(size: 17, weight: .medium))
+                                        .font(.system(.body))
+                                        .fontWeight(.medium)
                                     Spacer()
                                     Image(systemName: "chevron.right")
-                                        .font(.system(size: 14, weight: .semibold))
-                                        .foregroundColor(.secondary)
+                                        .font(.system(.caption))
+                                        .fontWeight(.semibold)
+                                        .foregroundColor(colorScheme == .dark ? Color.white.opacity(0.4) : Color.black.opacity(0.4))
                                 }
-                                .foregroundColor(.primary)
+                                .foregroundColor(colorScheme == .dark ? .white : .black)
                                 .padding()
-                                .background(Color(.secondarySystemBackground))
+                                .background(colorScheme == .dark ? Color.white.opacity(0.1) : Color.black.opacity(0.05))
                                 .cornerRadius(12)
                             }
                         }
@@ -135,7 +141,7 @@ struct ArtworkDetailView: View {
                 }
             }
             .ignoresSafeArea(edges: .top)
-            .background(Color(.systemBackground))
+            .background(colorScheme == .dark ? Color.black : Color(.systemBackground))
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(.hidden, for: .navigationBar)
             .toolbar {
@@ -143,9 +149,9 @@ struct ArtworkDetailView: View {
                     Button {
                         onDismiss()
                     } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 28))
-                            .foregroundStyle(.white)
+                        Image(systemName: "xmark")
+                            .font(.system(size: 24))
+                            .foregroundColor(.white)
                             .symbolRenderingMode(.hierarchical)
                             .shadow(color: .black.opacity(0.3), radius: 4)
                     }
@@ -169,14 +175,21 @@ struct ArtworkDetailView: View {
         }
         .presentationDragIndicator(.visible)
         .presentationCornerRadius(20)
-        .task {
-            // If we don't already have a real artwork image, fetch it now
-            guard realArtworkImage == nil, !isFetchingImage else { return }
+        .task(id: artwork.id) {
+            // Load image from artwork data first
+            if let imageData = artwork.imageData, let image = UIImage(data: imageData) {
+                print("✅ Loaded image from artwork.imageData for: \(artwork.title)")
+                displayImage = image
+                return
+            }
+            
+            // If no image data exists, try to fetch the artwork image
+            guard !isFetchingImage else { return }
             isFetchingImage = true
             print("🖼️ Fetching real artwork image for: \(artwork.title) by \(artwork.artist)")
             if let fetched = try? await GeminiService.shared.fetchArtworkImage(title: artwork.title, artist: artwork.artist) {
                 print("✅ Got real artwork image")
-                realArtworkImage = fetched
+                displayImage = fetched
             } else {
                 print("❌ Failed to fetch real artwork image")
             }
@@ -191,8 +204,8 @@ struct ArtworkDetailView: View {
             let width = geometry.size.width
             
             ZStack(alignment: .bottomLeading) {
-                // Show real artwork image, with a loading placeholder while fetching
-                if let uiImage = realArtworkImage {
+                // Show artwork image, with a loading placeholder while fetching
+                if let uiImage = displayImage {
                     Image(uiImage: uiImage)
                         .resizable()
                         .aspectRatio(contentMode: .fill)
@@ -200,7 +213,7 @@ struct ArtworkDetailView: View {
                         .clipped()
                         .transition(.opacity.animation(.easeIn(duration: 0.4)))
                 } else {
-                    // Placeholder while the real image loads
+                    // Placeholder while the image loads
                     Rectangle()
                         .fill(Color(.secondarySystemBackground))
                         .frame(width: width, height: width)
@@ -232,11 +245,12 @@ struct ArtworkDetailView: View {
                 // Title and artist at bottom over gradient
                 VStack(alignment: .leading, spacing: 6) {
                     Text(artwork.title)
-                        .font(.system(size: 34, weight: .bold, design: .serif))
+                        .font(.custom("NewYork", size: 34))
+                        .fontWeight(.semibold)
                         .foregroundColor(.white)
                     
                     Text(artwork.artist)
-                        .font(.system(size: 18, weight: .medium))
+                        .font(.system(.title3))
                         .foregroundColor(.white.opacity(0.95))
                 }
                 .padding(.horizontal, 20)
@@ -254,24 +268,28 @@ struct ArtworkDetailView: View {
         HStack(spacing: 32) {
             VStack(alignment: .leading, spacing: 4) {
                 Text("YEAR")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundColor(.secondary)
+                    .font(.system(.caption))
+                    .fontWeight(.semibold)
+                    .foregroundColor(colorScheme == .dark ? Color.white.opacity(0.5) : Color.black.opacity(0.5))
                     .tracking(1)
                 
                 Text(artwork.year)
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.primary)
+                    .font(.system(.body))
+                    .fontWeight(.medium)
+                    .foregroundColor(colorScheme == .dark ? .white : .black)
             }
             
             VStack(alignment: .leading, spacing: 4) {
                 Text("MOVEMENT")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundColor(.secondary)
+                    .font(.system(.caption))
+                    .fontWeight(.semibold)
+                    .foregroundColor(colorScheme == .dark ? Color.white.opacity(0.5) : Color.black.opacity(0.5))
                     .tracking(1)
                 
                 Text(artwork.movement)
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.primary)
+                    .font(.system(.body))
+                    .fontWeight(.medium)
+                    .foregroundColor(colorScheme == .dark ? .white : .black)
             }
             
             Spacer()

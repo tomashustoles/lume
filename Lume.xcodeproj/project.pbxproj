@@ -56,13 +56,6 @@
 			);
 			target = 35C60A242F2C099E002C86C0 /* Lume */;
 		};
-		35C60A9D2F2C0BC3002C86C0 /* Exceptions for "Lume" folder in "LumeTests" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				TestsScanLimitManagerTests.swift,
-			);
-			target = 35BC2BF22F2994B700774EBA /* LumeTests */;
-		};
 		35C60A9F2F2C1EFE002C86C0 /* Exceptions for "Lume" folder in "LumeTests" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -75,24 +68,6 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		35BC2BE82F2994B600774EBA /* Lume */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				35C60A9D2F2C0BC3002C86C0 /* Exceptions for "Lume" folder in "LumeTests" target */,
-			);
-			path = Lume;
-			sourceTree = "<group>";
-		};
-		35BC2BF62F2994B700774EBA /* LumeTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = LumeTests;
-			sourceTree = "<group>";
-		};
-		35BC2C002F2994B700774EBA /* LumeUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = LumeUITests;
-			sourceTree = "<group>";
-		};
 		35C60A262F2C099E002C86C0 /* Lume */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -143,9 +118,6 @@
 			isa = PBXGroup;
 			children = (
 				35BC2C782F2C05FD00774EBA /* Products.storekit */,
-				35BC2BE82F2994B600774EBA /* Lume */,
-				35BC2BF62F2994B700774EBA /* LumeTests */,
-				35BC2C002F2994B700774EBA /* LumeUITests */,
 				35C60A262F2C099E002C86C0 /* Lume */,
 				35C60A342F2C09A0002C86C0 /* LumeTests */,
 				35C60A3E2F2C09A0002C86C0 /* LumeUITests */,
@@ -190,9 +162,6 @@
 			dependencies = (
 				35C60A9B2F2C0B09002C86C0 /* PBXTargetDependency */,
 			);
-			fileSystemSynchronizedGroups = (
-				35BC2BF62F2994B700774EBA /* LumeTests */,
-			);
 			name = LumeTests;
 			packageProductDependencies = (
 			);
@@ -212,9 +181,6 @@
 			);
 			dependencies = (
 				35C60A992F2C0B06002C86C0 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				35BC2C002F2994B700774EBA /* LumeUITests */,
 			);
 			name = LumeUITests;
 			packageProductDependencies = (

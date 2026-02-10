@@ -156,6 +156,11 @@ class ScanLimitManager: ObservableObject {
         let currentUptime = ProcessInfo.processInfo.systemUptime
         let lastUptime = UserDefaults.standard.double(forKey: Keys.lastKnownSystemUptime)
         
+        // If there's no previous uptime recorded, can't detect manipulation
+        if lastUptime == 0 {
+            return false
+        }
+        
         // If uptime decreased, system was rebooted, which is fine
         if currentUptime < lastUptime {
             return false
@@ -168,12 +173,12 @@ class ScanLimitManager: ObservableObject {
         let now = Date()
         let actualTimeDifference = now.timeIntervalSince(lastResetDate)
         
-        // If actual time difference is significantly different from uptime difference,
+        // If actual time difference is negative or significantly different from uptime difference,
         // the clock may have been changed (allow 5 minute tolerance for clock drift)
         let tolerance: TimeInterval = 300 // 5 minutes
         let timeDifference = abs(actualTimeDifference - uptimeDifference)
         
-        return timeDifference > tolerance
+        return actualTimeDifference >= 0 && timeDifference > tolerance
     }
     
     private func updateSystemUptimeReference() {

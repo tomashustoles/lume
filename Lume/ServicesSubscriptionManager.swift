@@ -29,13 +29,19 @@ class SubscriptionManager: ObservableObject {
     init() {
         // Load cached entitlement state
         loadCachedEntitlement()
+    }
+    
+    // Start transaction listener when ready
+    func startListening() {
+        guard updateListenerTask == nil else { return }
         
         // Start listening for transaction updates
         updateListenerTask = listenForTransactions()
         
         // Start periodic status checks
         statusCheckTask = Task { [weak self] in
-            await self?.performPeriodicStatusCheck()
+            guard let self = self else { return }
+            await self.performPeriodicStatusCheck()
         }
     }
     
@@ -241,20 +247,28 @@ class SubscriptionManager: ObservableObject {
     // MARK: - Listen for Transactions
     
     private func listenForTransactions() -> Task<Void, Error> {
-        return Task.detached { [weak self] in
+        return Task.detached {
             for await result in Transaction.updates {
-                do {
-                    let transaction = try await self?.checkVerified(result)
+                guard !Task.isCancelled else { break }
+                
+                await MainActor.run { [weak self] in
+                    guard let self = self else { return }
                     
-                    // Finish the transaction
-                    await transaction?.finish()
-                    
-                    // Update subscription status
-                    await self?.loadSubscriptionStatus()
-                    
-                    print("✅ Transaction update processed: \(transaction?.productID ?? "unknown")")
-                } catch {
-                    print("❌ Transaction verification failed: \(error)")
+                    Task {
+                        do {
+                            let transaction = try self.checkVerified(result)
+                            
+                            // Finish the transaction
+                            await transaction.finish()
+                            
+                            // Update subscription status
+                            await self.loadSubscriptionStatus()
+                            
+                            print("✅ Transaction update processed: \(transaction.productID)")
+                        } catch {
+                            print("❌ Transaction verification failed: \(error)")
+                        }
+                    }
                 }
             }
         }
@@ -267,9 +281,10 @@ class SubscriptionManager: ObservableObject {
         while !Task.isCancelled {
             do {
                 try await Task.sleep(nanoseconds: 3_600_000_000_000) // 1 hour
+                guard !Task.isCancelled else { break }
                 await loadSubscriptionStatus()
             } catch {
-                // Task was cancelled
+                // Task was cancelled or sleep was interrupted
                 break
             }
         }

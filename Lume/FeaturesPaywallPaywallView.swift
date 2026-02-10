@@ -9,6 +9,7 @@ import SwiftUI
 import StoreKit
 
 struct PaywallView: View {
+    @Environment(\.colorScheme) private var colorScheme
     @EnvironmentObject var subscriptionManager: SubscriptionManager
     @Environment(\.dismiss) var dismiss
     
@@ -48,7 +49,7 @@ struct PaywallView: View {
                 .padding(.horizontal, 24)
                 .padding(.vertical, 32)
             }
-            .background(Color.white)
+            .background(colorScheme == .dark ? Color.black : Color.white)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -56,7 +57,7 @@ struct PaywallView: View {
                         dismiss()
                     } label: {
                         Image(systemName: "xmark")
-                            .foregroundColor(.black)
+                            .foregroundColor(colorScheme == .dark ? .white : .black)
                     }
                 }
             }
@@ -77,16 +78,16 @@ struct PaywallView: View {
         VStack(alignment: .leading, spacing: 16) {
             Image(systemName: "sparkles")
                 .font(.system(size: 40))
-                .foregroundColor(.black)
+                .foregroundColor(colorScheme == .dark ? .white : .black)
             
             Text("Unlock\nUnlimited Art")
                 .font(.custom("NewYork", size: 42))
                 .fontWeight(.semibold)
-                .foregroundColor(.black)
+                .foregroundColor(colorScheme == .dark ? .white : .black)
             
-            Text("Discover endless artworks with Museum Companion Pro")
+            Text("Discover endless artworks with Lume")
                 .font(.system(.title3))
-                .foregroundColor(.black.opacity(0.6))
+                .foregroundColor(colorScheme == .dark ? Color.white.opacity(0.6) : Color.black.opacity(0.6))
         }
     }
     
@@ -97,25 +98,29 @@ struct PaywallView: View {
             FeatureRow(
                 icon: "infinity",
                 title: "Unlimited Scans",
-                description: "Recognize as many artworks as you want"
+                description: "Recognize as many artworks as you want",
+                colorScheme: colorScheme
             )
             
             FeatureRow(
                 icon: "icloud.fill",
                 title: "iCloud Sync",
-                description: "Access your collection across all devices"
+                description: "Access your collection across all devices",
+                colorScheme: colorScheme
             )
             
             FeatureRow(
                 icon: "book.fill",
                 title: "Story Mode",
-                description: "Experience emotional narratives for every piece"
+                description: "Experience emotional narratives for every piece",
+                colorScheme: colorScheme
             )
             
             FeatureRow(
                 icon: "heart.fill",
                 title: "Unlimited Favorites",
-                description: "Build your personal art collection"
+                description: "Build your personal art collection",
+                colorScheme: colorScheme
             )
         }
     }
@@ -128,6 +133,7 @@ struct PaywallView: View {
                 ProductCard(
                     product: product,
                     isSelected: selectedProduct?.id == product.id,
+                    colorScheme: colorScheme,
                     onSelect: {
                         selectedProduct = product
                     }
@@ -147,17 +153,17 @@ struct PaywallView: View {
             HStack {
                 if isPurchasing {
                     ProgressView()
-                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        .progressViewStyle(CircularProgressViewStyle(tint: colorScheme == .dark ? .black : .white))
                 } else {
                     Text("Start Free Trial")
                         .font(.system(.body, design: .default))
                         .fontWeight(.semibold)
                 }
             }
-            .foregroundColor(.white)
+            .foregroundColor(colorScheme == .dark ? .black : .white)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
-            .background(Color.black)
+            .background(colorScheme == .dark ? .white : .black)
             .cornerRadius(12)
         }
         .disabled(selectedProduct == nil || isPurchasing)
@@ -174,7 +180,7 @@ struct PaywallView: View {
         } label: {
             Text("Restore Purchases")
                 .font(.system(.body))
-                .foregroundColor(.black.opacity(0.6))
+                .foregroundColor(colorScheme == .dark ? Color.white.opacity(0.6) : Color.black.opacity(0.6))
                 .frame(maxWidth: .infinity)
         }
         .disabled(isPurchasing)
@@ -186,11 +192,11 @@ struct PaywallView: View {
         VStack(spacing: 8) {
             Text("7 days free, then \(selectedProduct?.displayPrice ?? "€2.99/month")")
                 .font(.system(.caption))
-                .foregroundColor(.black.opacity(0.5))
+                .foregroundColor(colorScheme == .dark ? Color.white.opacity(0.5) : Color.black.opacity(0.5))
             
             Text("Subscription auto-renews. Cancel anytime in Settings.")
                 .font(.system(.caption))
-                .foregroundColor(.black.opacity(0.5))
+                .foregroundColor(colorScheme == .dark ? Color.white.opacity(0.5) : Color.black.opacity(0.5))
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
@@ -236,23 +242,24 @@ struct FeatureRow: View {
     let icon: String
     let title: String
     let description: String
+    let colorScheme: ColorScheme
     
     var body: some View {
         HStack(alignment: .top, spacing: 16) {
             Image(systemName: icon)
                 .font(.system(size: 24))
-                .foregroundColor(.black)
+                .foregroundColor(colorScheme == .dark ? .white : .black)
                 .frame(width: 32)
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.system(.body, design: .default))
                     .fontWeight(.semibold)
-                    .foregroundColor(.black)
+                    .foregroundColor(colorScheme == .dark ? .white : .black)
                 
                 Text(description)
                     .font(.system(.subheadline))
-                    .foregroundColor(.black.opacity(0.6))
+                    .foregroundColor(colorScheme == .dark ? Color.white.opacity(0.6) : Color.black.opacity(0.6))
             }
         }
     }
@@ -263,6 +270,7 @@ struct FeatureRow: View {
 struct ProductCard: View {
     let product: Product
     let isSelected: Bool
+    let colorScheme: ColorScheme
     let onSelect: () -> Void
     
     var body: some View {
@@ -275,34 +283,39 @@ struct ProductCard: View {
                         Text(product.displayName)
                             .font(.system(.body, design: .default))
                             .fontWeight(.semibold)
-                            .foregroundColor(.black)
+                            .foregroundColor(colorScheme == .dark ? .white : .black)
                         
                         if let subscription = product.subscription,
                            let savingsText = savingsText(for: subscription) {
                             Text(savingsText)
                                 .font(.system(.caption))
                                 .fontWeight(.medium)
-                                .foregroundColor(.white)
+                                .foregroundColor(colorScheme == .dark ? .black : .white)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 4)
-                                .background(Color.black)
+                                .background(colorScheme == .dark ? .white : .black)
                                 .cornerRadius(4)
                         }
                     }
                     
                     Text(product.displayPrice)
                         .font(.system(.subheadline))
-                        .foregroundColor(.black.opacity(0.6))
+                        .foregroundColor(colorScheme == .dark ? Color.white.opacity(0.6) : Color.black.opacity(0.6))
                 }
                 
                 Spacer()
                 
                 Circle()
-                    .stroke(isSelected ? Color.black : Color.black.opacity(0.3), lineWidth: 2)
+                    .stroke(
+                        isSelected 
+                            ? (colorScheme == .dark ? Color.white : Color.black) 
+                            : (colorScheme == .dark ? Color.white.opacity(0.3) : Color.black.opacity(0.3)), 
+                        lineWidth: 2
+                    )
                     .frame(width: 24, height: 24)
                     .overlay(
                         Circle()
-                            .fill(Color.black)
+                            .fill(colorScheme == .dark ? .white : .black)
                             .frame(width: 14, height: 14)
                             .opacity(isSelected ? 1 : 0)
                     )
@@ -311,7 +324,9 @@ struct ProductCard: View {
             .background(
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(
-                        isSelected ? Color.black : Color.black.opacity(0.2),
+                        isSelected 
+                            ? (colorScheme == .dark ? Color.white : Color.black) 
+                            : (colorScheme == .dark ? Color.white.opacity(0.2) : Color.black.opacity(0.2)),
                         lineWidth: isSelected ? 2 : 1
                     )
             )

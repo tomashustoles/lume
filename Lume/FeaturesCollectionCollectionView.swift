@@ -7,16 +7,26 @@
 
 import SwiftUI
 
+// Wrapper to make UUID work with .sheet(item:)
+struct IdentifiableUUID: Identifiable {
+    let id: UUID
+}
+
 struct CollectionView: View {
+    @Environment(\.colorScheme) private var colorScheme
     @EnvironmentObject var historyManager: HistoryManager
     @State private var searchText = ""
     @State private var showFavoritesOnly = false
-    @State private var selectedArtwork: Artwork?
-    @State private var showDetail = false
+    @State private var selectedArtworkWrapper: IdentifiableUUID?
     
     private var filteredArtworks: [Artwork] {
         let artworks = showFavoritesOnly ? historyManager.favorites : historyManager.artworks
         return searchText.isEmpty ? artworks : historyManager.search(query: searchText)
+    }
+    
+    // Helper to find artwork by ID (searches in all artworks, not just filtered)
+    private func findArtwork(by id: UUID) -> Artwork? {
+        return historyManager.artworks.first(where: { $0.id == id })
     }
     
     var body: some View {
@@ -28,10 +38,12 @@ struct CollectionView: View {
                     ScrollView {
                         LazyVStack(spacing: 0) {
                             ForEach(filteredArtworks) { artwork in
-                                ArtworkRow(artwork: artwork)
+                                ArtworkRow(artwork: artwork, colorScheme: colorScheme)
                                     .onTapGesture {
-                                        selectedArtwork = artwork
-                                        showDetail = true
+                                        print("🔵 CollectionView - Tapped artwork: '\(artwork.title)' by '\(artwork.artist)', ID: \(artwork.id)")
+                                        print("🔵 Artwork has imageData: \(artwork.imageData != nil), description: '\(artwork.description.prefix(50))...'")
+                                        print("🔵 Current historyManager.artworks count: \(historyManager.artworks.count)")
+                                        selectedArtworkWrapper = IdentifiableUUID(id: artwork.id)
                                     }
                                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                                         Button(role: .destructive) {
@@ -68,7 +80,7 @@ struct CollectionView: View {
                     }
                 }
             }
-            .background(Color.white)
+            .background(colorScheme == .dark ? Color.black : Color.white)
             .navigationTitle("Collection")
             .searchable(text: $searchText, prompt: "Search artworks...")
             .toolbar {
@@ -77,16 +89,49 @@ struct CollectionView: View {
                         showFavoritesOnly.toggle()
                     } label: {
                         Image(systemName: showFavoritesOnly ? "heart.fill" : "heart")
-                            .foregroundColor(showFavoritesOnly ? .red : .black)
+                            .foregroundColor(showFavoritesOnly ? .red : (colorScheme == .dark ? .white : .black))
                     }
                 }
             }
-            .sheet(isPresented: $showDetail) {
-                if let artwork = selectedArtwork {
+            .sheet(item: $selectedArtworkWrapper) { wrapper in
+                // Sheet content is evaluated fresh each time with the latest data
+                let artworkID = wrapper.id
+                let artwork = findArtwork(by: artworkID)
+                
+                let _ = print("🔍 CollectionView sheet - Looking for artwork ID: \(artworkID)")
+                let _ = print("🔍 Total artworks in manager: \(historyManager.artworks.count)")
+                
+                if let artwork = artwork {
+                    let _ = print("✅ CollectionView sheet - Found artwork: '\(artwork.title)' by '\(artwork.artist)', has imageData: \(artwork.imageData != nil), description length: \(artwork.description.count)")
                     ArtworkDetailView(artwork: artwork) {
-                        showDetail = false
-                        selectedArtwork = nil
+                        selectedArtworkWrapper = nil
                     }
+                    .environmentObject(historyManager)
+                } else {
+                    let _ = print("❌ CollectionView sheet - Artwork not found for ID: \(artworkID.uuidString)")
+                    // Fallback if artwork not found
+                    VStack(spacing: 20) {
+                        Text("Artwork Not Found")
+                            .font(.headline)
+                        Text("ID: \(artworkID.uuidString.prefix(8))...")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Text("Total artworks: \(historyManager.artworks.count)")
+                            .font(.caption)
+                        if historyManager.artworks.count > 0 {
+                            Text("Available IDs:")
+                                .font(.caption2)
+                            ForEach(historyManager.artworks.prefix(3)) { art in
+                                Text("\(art.id.uuidString.prefix(8))... - \(art.title)")
+                                    .font(.caption2)
+                            }
+                        }
+                        Button("Close") {
+                            selectedArtworkWrapper = nil
+                        }
+                        .buttonStyle(.borderedProminent)
+                    }
+                    .padding()
                 }
             }
         }
@@ -101,13 +146,13 @@ struct CollectionView: View {
                 .foregroundColor(.gray)
             
             Text(showFavoritesOnly ? "No Favorites Yet" : "No Artworks Yet")
-                .font(.custom("NewYork", size: 28))
+                .font(.custom("NewYork", size: 42))
                 .fontWeight(.semibold)
-                .foregroundColor(.black)
+                .foregroundColor(colorScheme == .dark ? .white : .black)
             
             Text(showFavoritesOnly ? "Start favoriting artworks to build your collection." : "Scan your first artwork to begin your journey.")
-                .font(.body)
-                .foregroundColor(.secondary)
+                .font(.system(.title3))
+                .foregroundColor(colorScheme == .dark ? Color.white.opacity(0.6) : Color.black.opacity(0.6))
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 40)
         }
@@ -118,6 +163,7 @@ struct CollectionView: View {
 
 struct ArtworkRow: View {
     let artwork: Artwork
+    let colorScheme: ColorScheme
     
     var body: some View {
         HStack(alignment: .top, spacing: 16) {
@@ -150,7 +196,7 @@ struct ArtworkRow: View {
                     Text(artwork.title)
                         .font(.system(.body, design: .default))
                         .fontWeight(.semibold)
-                        .foregroundColor(.black)
+                        .foregroundColor(colorScheme == .dark ? .white : .black)
                         .lineLimit(2)
                     
                     if artwork.isFavorite {
@@ -162,28 +208,28 @@ struct ArtworkRow: View {
                 
                 Text(artwork.artist)
                     .font(.system(.subheadline))
-                    .foregroundColor(.black.opacity(0.6))
+                    .foregroundColor(colorScheme == .dark ? Color.white.opacity(0.6) : Color.black.opacity(0.6))
                     .lineLimit(1)
                 
                 Text(artwork.movement)
                     .font(.system(.caption))
-                    .foregroundColor(.black.opacity(0.5))
+                    .foregroundColor(colorScheme == .dark ? Color.white.opacity(0.5) : Color.black.opacity(0.5))
                     .lineLimit(1)
                 
                 Text(formatDate(artwork.timestamp))
                     .font(.system(.caption2))
-                    .foregroundColor(.black.opacity(0.4))
+                    .foregroundColor(colorScheme == .dark ? Color.white.opacity(0.4) : Color.black.opacity(0.4))
             }
             
             Spacer()
             
             Image(systemName: "chevron.right")
                 .font(.system(size: 14))
-                .foregroundColor(.black.opacity(0.3))
+                .foregroundColor(colorScheme == .dark ? Color.white.opacity(0.3) : Color.black.opacity(0.3))
         }
         .padding(.horizontal, 24)
         .padding(.vertical, 12)
-        .background(Color.white)
+        .background(colorScheme == .dark ? Color.black : Color.white)
     }
     
     private func formatDate(_ date: Date) -> String {

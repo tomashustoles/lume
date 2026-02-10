@@ -21,6 +21,12 @@ struct CameraView: UIViewControllerRepresentable {
     
     func updateUIViewController(_ uiViewController: CameraViewController, context: Context) {}
     
+    static func dismantleUIViewController(_ uiViewController: CameraViewController, coordinator: Coordinator) {
+        print("🔵 Dismantling CameraViewController")
+        // Clear delegate to break retain cycle
+        uiViewController.delegate = nil
+    }
+    
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
     }
@@ -53,6 +59,9 @@ class CameraViewController: UIViewController {
     private var captureSession: AVCaptureSession?
     private var photoOutput: AVCapturePhotoOutput?
     private var previewLayer: AVCaptureVideoPreviewLayer?
+    private var videoDevice: AVCaptureDevice?
+    private var rotationCoordinator: AVCaptureDevice.RotationCoordinator?
+    private var isCameraSetup = false
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -69,30 +78,170 @@ class CameraViewController: UIViewController {
         stopSession()
     }
     
+    deinit {
+        print("🔴 CameraViewController deinit called")
+        
+        // Remove any associated objects (Mac capture delegate)
+        objc_removeAssociatedObjects(self)
+        
+        // Stop session synchronously - critical for proper cleanup
+        if let session = captureSession, session.isRunning {
+            // Use sync to ensure it completes before deallocation
+            let queue = DispatchQueue(label: "camera.cleanup", qos: .userInitiated)
+            queue.sync {
+                session.stopRunning()
+                print("🔴 Session stopped in deinit")
+            }
+        }
+        
+        // Remove preview layer from superlayer on main thread if possible
+        if Thread.isMainThread {
+            previewLayer?.removeFromSuperlayer()
+        }
+        
+        // Clean up capture session - remove all inputs and outputs
+        if let session = captureSession {
+            session.beginConfiguration()
+            for input in session.inputs {
+                session.removeInput(input)
+            }
+            for output in session.outputs {
+                session.removeOutput(output)
+            }
+            session.commitConfiguration()
+            print("🔴 Session inputs/outputs removed")
+        }
+        
+        // Explicitly nil out all properties
+        previewLayer = nil
+        captureSession = nil
+        photoOutput = nil
+        videoDevice = nil
+        rotationCoordinator = nil
+        
+        print("🔴 CameraViewController cleanup complete")
+    }
+    
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         previewLayer?.frame = view.bounds
+        updatePreviewLayerOrientation()
+    }
+    
+    private func updatePreviewLayerOrientation() {
+        guard let previewLayer = previewLayer,
+              let connection = previewLayer.connection else {
+            return
+        }
+        
+        // Use the modern rotation coordinator if available
+        if let rotationCoordinator = rotationCoordinator {
+            let videoRotationAngle = rotationCoordinator.videoRotationAngleForHorizonLevelCapture
+            connection.videoRotationAngle = videoRotationAngle
+        } else {
+            // Fallback for devices without rotation coordinator
+            let windowScene = view.window?.windowScene
+            if #available(iOS 26.0, *) {
+                let interfaceOrientation = windowScene?.effectiveGeometry.interfaceOrientation ?? .portrait
+                connection.videoRotationAngle = videoRotationAngle(for: interfaceOrientation)
+            } else {
+                let interfaceOrientation = windowScene?.interfaceOrientation ?? .portrait
+                connection.videoRotationAngle = videoRotationAngle(for: interfaceOrientation)
+            }
+        }
+    }
+    
+    // Helper to convert interface orientation to rotation angle
+    private func videoRotationAngle(for interfaceOrientation: UIInterfaceOrientation) -> CGFloat {
+        switch interfaceOrientation {
+        case .portrait:
+            return 0
+        case .portraitUpsideDown:
+            return 180
+        case .landscapeLeft:
+            return 90
+        case .landscapeRight:
+            return 270
+        case .unknown:
+            return 0
+        @unknown default:
+            return 0
+        }
     }
     
     private func setupCamera() {
+        // Prevent multiple setups
+        guard !isCameraSetup else {
+            print("⚠️ Camera already setup, skipping")
+            return
+        }
+        
+        print("🟢 Setting up camera...")
+        
+        // Clean up any existing session first (shouldn't happen, but be defensive)
+        if let existingSession = captureSession {
+            print("⚠️ Cleaning up existing session")
+            if existingSession.isRunning {
+                DispatchQueue.global(qos: .userInitiated).sync {
+                    existingSession.stopRunning()
+                }
+            }
+            existingSession.beginConfiguration()
+            for input in existingSession.inputs {
+                existingSession.removeInput(input)
+            }
+            for output in existingSession.outputs {
+                existingSession.removeOutput(output)
+            }
+            existingSession.commitConfiguration()
+        }
+        
         captureSession = AVCaptureSession()
         captureSession?.sessionPreset = .photo
         
         guard let captureSession = captureSession,
-              let backCamera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back),
-              let input = try? AVCaptureDeviceInput(device: backCamera) else {
+              let backCamera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) else {
+            print("❌ Failed to get capture session or camera")
             return
+        }
+        
+        // Create input
+        guard let input = try? AVCaptureDeviceInput(device: backCamera) else {
+            print("❌ Failed to create camera input")
+            return
+        }
+        
+        // Store the video device and create rotation coordinator
+        videoDevice = backCamera
+        if #available(iOS 17.0, *) {
+            rotationCoordinator = AVCaptureDevice.RotationCoordinator(device: backCamera, previewLayer: nil)
         }
         
         photoOutput = AVCapturePhotoOutput()
         
+        // Add input and output
+        captureSession.beginConfiguration()
+        
         if captureSession.canAddInput(input) {
             captureSession.addInput(input)
+        } else {
+            print("❌ Cannot add camera input")
+            captureSession.commitConfiguration()
+            return
         }
         
         if let photoOutput = photoOutput, captureSession.canAddOutput(photoOutput) {
             captureSession.addOutput(photoOutput)
+        } else {
+            print("❌ Cannot add photo output")
+            captureSession.commitConfiguration()
+            return
         }
+        
+        captureSession.commitConfiguration()
+        
+        // Remove old preview layer if it exists
+        previewLayer?.removeFromSuperlayer()
         
         previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
         previewLayer?.videoGravity = .resizeAspectFill
@@ -101,6 +250,12 @@ class CameraViewController: UIViewController {
         if let previewLayer = previewLayer {
             view.layer.addSublayer(previewLayer)
         }
+        
+        // Set initial orientation
+        updatePreviewLayerOrientation()
+        
+        isCameraSetup = true
+        print("✅ Camera setup complete")
     }
     
     private func startSession() {
@@ -111,7 +266,8 @@ class CameraViewController: UIViewController {
     
     private func stopSession() {
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            self?.captureSession?.stopRunning()
+            guard let session = self?.captureSession, session.isRunning else { return }
+            session.stopRunning()
         }
     }
     
@@ -163,6 +319,28 @@ class CameraViewController: UIViewController {
         print("📸 Using standard photo capture for iOS/iPad")
         let settings = AVCapturePhotoSettings()
         settings.flashMode = .auto
+        
+        // Set the video rotation angle for the photo output connection
+        if let connection = photoOutput.connection(with: .video) {
+            if let rotationCoordinator = rotationCoordinator {
+                // Use rotation coordinator for proper orientation
+                let videoRotationAngle = rotationCoordinator.videoRotationAngleForHorizonLevelCapture
+                connection.videoRotationAngle = videoRotationAngle
+                print("📸 Set photo capture rotation angle to: \(videoRotationAngle)°")
+            } else {
+                // Fallback without rotation coordinator
+                let windowScene = view.window?.windowScene
+                if #available(iOS 26.0, *) {
+                    let interfaceOrientation = windowScene?.effectiveGeometry.interfaceOrientation ?? .portrait
+                    connection.videoRotationAngle = videoRotationAngle(for: interfaceOrientation)
+                } else {
+                    let interfaceOrientation = windowScene?.interfaceOrientation ?? .portrait
+                    connection.videoRotationAngle = videoRotationAngle(for: interfaceOrientation)
+                }
+                print("📸 Set photo capture rotation angle to: \(connection.videoRotationAngle)°")
+            }
+        }
+        
         photoOutput.capturePhoto(with: settings, delegate: self)
         #endif
     }
@@ -186,21 +364,29 @@ class CameraViewController: UIViewController {
             
             // Reduced delay from 0.5 to 0.2 seconds - camera should be ready quickly since it's already streaming
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
+                guard let self = self else { return }
                 print("📸 Camera ready, capturing frame...")
                 
                 let delegate = VideoFrameCaptureDelegate { [weak self] image in
                     print("✅ Captured frame from video on Mac")
-                    self?.delegate?.didCaptureImage(image)
                     
-                    // Remove video output after capture
+                    // Cleanup first
                     if captureSession.outputs.contains(videoOutput) {
+                        videoOutput.setSampleBufferDelegate(nil, queue: nil)
                         captureSession.removeOutput(videoOutput)
+                        print("🔄 Removed video output after capture")
                     }
+                    
+                    // Clear the associated object
+                    objc_removeAssociatedObjects(self as Any)
+                    
+                    // Then notify delegate
+                    self?.delegate?.didCaptureImage(image)
                 }
                 videoOutput.setSampleBufferDelegate(delegate, queue: queue)
                 
-                // Store delegate to prevent deallocation
-                objc_setAssociatedObject(self as Any, "frameDelegate", delegate, .OBJC_ASSOCIATION_RETAIN)
+                // Store delegate to prevent deallocation - use RETAIN_NONATOMIC for better cleanup
+                objc_setAssociatedObject(self, "frameDelegate", delegate, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
             }
         } else {
             print("❌ Cannot add video output - falling back to standard photo")
@@ -322,11 +508,11 @@ extension CameraViewController: AVCapturePhotoCaptureDelegate {
             return
         }
         
-        // Fix orientation before cropping so the image is always upright
-        let orientedImage = image.fixedOrientation()
+        // The orientation is now handled by setting videoOrientation on the connection
+        // before capture, so we don't need to call fixedOrientation() anymore
         
         // Crop to square (center crop)
-        let croppedImage = cropToSquare(orientedImage)
+        let croppedImage = cropToSquare(image)
         
         DispatchQueue.main.async {
             self.delegate?.didCaptureImage(croppedImage)

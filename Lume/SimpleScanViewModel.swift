@@ -20,47 +20,163 @@ class SimpleScanViewModel: NSObject, ObservableObject {
     @Published var showPaywall = false
     @Published var isScanningEnabled = true
     
-    let captureSession = AVCaptureSession()
-    private var photoOutput = AVCapturePhotoOutput()
+    private(set) var captureSession: AVCaptureSession?
+    private var photoOutput: AVCapturePhotoOutput?
     private let geminiService = GeminiService.shared
     
     // Store for async processing
     private var pendingHistoryManager: HistoryManager?
     private var pendingIsProUser = false
     
+    private var isCameraSetup = false
+    
     override init() {
         super.init()
+        // Don't setup camera in init - wait for explicit call
+        
+        // Listen for app lifecycle notifications
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(appDidEnterBackground),
+            name: UIApplication.didEnterBackgroundNotification,
+            object: nil
+        )
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(appWillTerminate),
+            name: UIApplication.willTerminateNotification,
+            object: nil
+        )
+    }
+    
+    @objc private func appDidEnterBackground() {
+        print("🔴 App entered background - stopping camera")
+        stopSession()
+    }
+    
+    @objc private func appWillTerminate() {
+        print("🔴 App will terminate - cleaning up camera")
+        cleanupSession()
+    }
+    
+    deinit {
+        // Remove notification observers
+        NotificationCenter.default.removeObserver(self)
+        
+        // Clean up capture session on deallocation
+        cleanupSession()
+    }
+    
+    private func cleanupSession() {
+        guard let session = captureSession else { return }
+        
+        // Stop session on background queue to avoid blocking
+        let cleanupQueue = DispatchQueue(label: "camera.cleanup", qos: .userInitiated)
+        cleanupQueue.sync {
+            if session.isRunning {
+                session.stopRunning()
+            }
+            
+            // Properly remove all inputs and outputs
+            session.beginConfiguration()
+            for input in session.inputs {
+                session.removeInput(input)
+            }
+            for output in session.outputs {
+                session.removeOutput(output)
+            }
+            session.commitConfiguration()
+        }
+        
+        captureSession = nil
+        photoOutput = nil
+        isCameraSetup = false
+    }
+    
+    func setupCameraIfNeeded() {
+        guard !isCameraSetup else { return }
+        isCameraSetup = true
         setupCamera()
     }
     
     private func setupCamera() {
-        captureSession.sessionPreset = .photo
+        // Clean up any existing session first
+        cleanupSession()
         
-        guard let camera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back),
-              let input = try? AVCaptureDeviceInput(device: camera) else {
-            print("Camera not available")
+        // Create fresh session
+        let session = AVCaptureSession()
+        session.sessionPreset = .photo
+        
+        // Try to get camera device - with error handling
+        guard let camera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) else {
+            print("❌ Camera device not available")
+            isCameraSetup = false
             return
         }
         
-        if captureSession.canAddInput(input) {
-            captureSession.addInput(input)
-        }
-        
-        if captureSession.canAddOutput(photoOutput) {
-            captureSession.addOutput(photoOutput)
+        // Check if camera is available (not locked by another process)
+        do {
+            let input = try AVCaptureDeviceInput(device: camera)
+            
+            let output = AVCapturePhotoOutput()
+            
+            session.beginConfiguration()
+            
+            if session.canAddInput(input) {
+                session.addInput(input)
+            } else {
+                print("❌ Cannot add camera input")
+                session.commitConfiguration()
+                isCameraSetup = false
+                return
+            }
+            
+            if session.canAddOutput(output) {
+                session.addOutput(output)
+            } else {
+                print("❌ Cannot add photo output")
+                session.commitConfiguration()
+                isCameraSetup = false
+                return
+            }
+            
+            session.commitConfiguration()
+            
+            self.captureSession = session
+            self.photoOutput = output
+            print("✅ Camera setup complete")
+        } catch {
+            print("❌ Failed to create camera input: \(error.localizedDescription)")
+            isCameraSetup = false
+            // Reset after a short delay to allow camera to become available
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(0.5))
+                if !isCameraSetup {
+                    setupCameraIfNeeded()
+                }
+            }
         }
     }
     
     func startSession() {
-        let session = captureSession
-        Task.detached {
+        guard let session = captureSession else {
+            // If session doesn't exist, try to set it up again
+            if !isCameraSetup {
+                setupCameraIfNeeded()
+            }
+            return
+        }
+        Task.detached { [weak session] in
+            guard let session = session, !session.isRunning else { return }
             session.startRunning()
         }
     }
     
     func stopSession() {
-        let session = captureSession
-        Task.detached {
+        guard let session = captureSession else { return }
+        Task.detached { [weak session] in
+            guard let session = session, session.isRunning else { return }
             session.stopRunning()
         }
     }
@@ -114,9 +230,16 @@ class SimpleScanViewModel: NSObject, ObservableObject {
         isProcessing = true
         pendingHistoryManager = historyManager
         
+        // Ensure we have a photo output
+        guard let output = photoOutput else {
+            print("❌ Photo output is nil")
+            isProcessing = false
+            return
+        }
+        
         // Capture photo
         let settings = AVCapturePhotoSettings()
-        photoOutput.capturePhoto(with: settings, delegate: self)
+        output.capturePhoto(with: settings, delegate: self)
         print("📸 Photo capture triggered")
     }
     

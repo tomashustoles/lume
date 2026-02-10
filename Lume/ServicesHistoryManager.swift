@@ -27,7 +27,15 @@ class HistoryManager: ObservableObject {
     // MARK: - Add Artwork
     
     func addArtwork(_ artwork: Artwork) async {
+        print("📝 HistoryManager.addArtwork - Adding: '\(artwork.title)' by '\(artwork.artist)' with ID: \(artwork.id)")
+        print("📝 Before add - Total artworks: \(artworks.count)")
+        print("📝 Artwork has imageData: \(artwork.imageData != nil), description length: \(artwork.description.count)")
+        
         artworks.insert(artwork, at: 0)
+        
+        print("📝 After add - Total artworks: \(artworks.count)")
+        print("📝 First artwork in array: '\(artworks.first?.title ?? "none")' with ID: \(artworks.first?.id.uuidString ?? "none")")
+        
         saveLocalData()
         await syncToCloud(artwork)
     }
@@ -76,13 +84,18 @@ class HistoryManager: ObservableObject {
     
     private func loadLocalData() {
         guard let data = UserDefaults.standard.data(forKey: localStorageKey) else {
+            print("ℹ️ No local artwork data found")
             return
         }
         
         do {
             artworks = try JSONDecoder().decode([Artwork].self, from: data)
+            print("✅ Loaded \(artworks.count) artworks from local storage")
         } catch {
-            print("Failed to load local artworks: \(error)")
+            print("❌ Failed to load local artworks: \(error)")
+            // Clear corrupted data
+            UserDefaults.standard.removeObject(forKey: localStorageKey)
+            artworks = []
         }
     }
     
@@ -90,8 +103,9 @@ class HistoryManager: ObservableObject {
         do {
             let data = try JSONEncoder().encode(artworks)
             UserDefaults.standard.set(data, forKey: localStorageKey)
+            print("✅ Saved \(artworks.count) artworks to local storage")
         } catch {
-            print("Failed to save local artworks: \(error)")
+            print("❌ Failed to save local artworks: \(error)")
         }
     }
     

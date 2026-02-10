@@ -9,6 +9,7 @@ import SwiftUI
 import StoreKit
 
 struct ProfileView: View {
+    @Environment(\.colorScheme) private var colorScheme
     @EnvironmentObject var subscriptionManager: SubscriptionManager
     @EnvironmentObject var scanLimitManager: ScanLimitManager
     @EnvironmentObject var historyManager: HistoryManager
@@ -47,7 +48,7 @@ struct ProfileView: View {
                             }
                         } label: {
                             Text("Manage Subscription")
-                                .foregroundColor(.black)
+                                .foregroundColor(colorScheme == .dark ? .white : .black)
                         }
                     } else {
                         Button {
@@ -58,7 +59,7 @@ struct ProfileView: View {
                                     Text("Upgrade to Pro")
                                         .font(.system(.body, design: .default))
                                         .fontWeight(.semibold)
-                                        .foregroundColor(.black)
+                                        .foregroundColor(colorScheme == .dark ? .white : .black)
                                     
                                     Text("Unlock unlimited scans")
                                         .font(.system(.caption))
@@ -68,13 +69,13 @@ struct ProfileView: View {
                                 Spacer()
                                 
                                 Image(systemName: "sparkles")
-                                    .foregroundColor(.black)
+                                    .foregroundColor(colorScheme == .dark ? .white : .black)
                             }
                         }
                         
                         HStack {
                             Text("Daily Scans")
-                                .foregroundColor(.black)
+                                .foregroundColor(colorScheme == .dark ? .white : .black)
                             
                             Spacer()
                             
@@ -110,7 +111,7 @@ struct ProfileView: View {
                     } label: {
                         HStack {
                             Text("Sync with iCloud")
-                                .foregroundColor(.black)
+                                .foregroundColor(colorScheme == .dark ? .white : .black)
                             
                             if historyManager.isLoading {
                                 Spacer()
@@ -127,14 +128,14 @@ struct ProfileView: View {
                         hasCompletedOnboarding = false
                     } label: {
                         Text("Show Onboarding")
-                            .foregroundColor(.black)
+                            .foregroundColor(colorScheme == .dark ? .white : .black)
                     }
                     
                     Link("Privacy Policy", destination: URL(string: "https://example.com/privacy")!)
-                        .foregroundColor(.black)
+                        .foregroundColor(colorScheme == .dark ? .white : .black)
                     
                     Link("Terms of Service", destination: URL(string: "https://example.com/terms")!)
-                        .foregroundColor(.black)
+                        .foregroundColor(colorScheme == .dark ? .white : .black)
                     
                     HStack {
                         Text("Version")

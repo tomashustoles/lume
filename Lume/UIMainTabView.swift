@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct MainTabView: View {
+    @Environment(\.colorScheme) private var colorScheme
     @State private var selectedTab = 0
     
     var body: some View {
@@ -32,7 +33,7 @@ struct MainTabView: View {
                 }
                 .tag(2)
         }
-        .tint(.black)
+        .tint(colorScheme == .dark ? .white : .black)
     }
 }
 

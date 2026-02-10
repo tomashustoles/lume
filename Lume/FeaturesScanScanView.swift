@@ -6,8 +6,10 @@
 //
 
 import SwiftUI
+import PhotosUI
 
 struct ScanView: View {
+    @Environment(\.colorScheme) private var colorScheme
     @StateObject private var viewModel = ScanViewModel()
     @EnvironmentObject var subscriptionManager: SubscriptionManager
     @EnvironmentObject var scanLimitManager: ScanLimitManager
@@ -18,6 +20,7 @@ struct ScanView: View {
     @State private var cameraViewController: CameraViewController?
     @State private var isAnalyzing = false
     @State private var frozenImage: UIImage?
+    @State private var selectedPhotoItem: PhotosPickerItem?
     
     let onNavigateToCollection: (() -> Void)?
     
@@ -72,6 +75,9 @@ struct ScanView: View {
                 // Capture button
                 captureButton
                 
+                // Photo picker button (bottom left corner)
+                photoPickerButton
+                
                 // Scan counter
                 if !subscriptionManager.isProUser {
                     scanCounter
@@ -84,6 +90,13 @@ struct ScanView: View {
         }
         .task {
             await viewModel.checkCameraPermission()
+        }
+        .onChange(of: selectedPhotoItem) { oldValue, newValue in
+            Task {
+                if let newValue {
+                    await loadAndProcessPhoto(from: newValue)
+                }
+            }
         }
         .sheet(isPresented: $showResult) {
             if let artwork = viewModel.recognizedArtwork {
@@ -155,8 +168,11 @@ struct ScanView: View {
     // MARK: - Capture Button
     
     private var captureButton: some View {
-        VStack {
-            Spacer()
+        GeometryReader { geometry in
+            let sideLength = min(geometry.size.width, geometry.size.height) * 0.7
+            let squareBottom = (geometry.size.height / 2) + (sideLength / 2)
+            let availableSpace = geometry.size.height - squareBottom
+            let buttonYPosition = squareBottom + (availableSpace / 2)
             
             Button {
                 print("🔵 Capture button tapped")
@@ -169,21 +185,40 @@ struct ScanView: View {
             } label: {
                 ZStack {
                     Circle()
-                        .fill(.ultraThinMaterial)
-                        .frame(width: 70, height: 70)
-                        .overlay(
-                            Circle()
-                                .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                        )
-                    
-                    Circle()
                         .fill(Color.white)
                         .frame(width: 60, height: 60)
                 }
+                .frame(width: 80, height: 80)
+                .glassEffect(.regular.interactive(), in: .circle)
             }
             .disabled(viewModel.isProcessing || isAnalyzing)
             .opacity((viewModel.isProcessing || isAnalyzing) ? 0.5 : 1.0)
-            .padding(.bottom, 40)
+            .position(x: geometry.size.width / 2, y: buttonYPosition)
+        }
+    }
+    
+    // MARK: - Photo Picker Button
+    
+    private var photoPickerButton: some View {
+        GeometryReader { geometry in
+            let sideLength = min(geometry.size.width, geometry.size.height) * 0.7
+            let squareLeft = (geometry.size.width / 2) - (sideLength / 2)
+            let squareBottom = (geometry.size.height / 2) + (sideLength / 2)
+            let availableSpace = geometry.size.height - squareBottom
+            let buttonYPosition = squareBottom + (availableSpace / 2)
+            
+            PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
+                ZStack {
+                    Image(systemName: "photo.on.rectangle")
+                        .font(.system(size: 24))
+                        .foregroundColor(.white)
+                }
+                .frame(width: 50, height: 50)
+                .glassEffect(.regular.interactive(), in: .circle)
+            }
+            .disabled(viewModel.isProcessing || isAnalyzing)
+            .opacity((viewModel.isProcessing || isAnalyzing) ? 0.5 : 1.0)
+            .position(x: squareLeft - 40, y: buttonYPosition)
         }
     }
     
@@ -197,18 +232,15 @@ struct ScanView: View {
                 VStack(spacing: 4) {
                     Text("\(scanLimitManager.scansRemaining)")
                         .font(.system(.title2, design: .rounded, weight: .bold))
-                        .foregroundColor(.white)
+                        .foregroundColor(.primary)
                     
                     Text("scans left")
                         .font(.system(.caption, design: .default))
-                        .foregroundColor(.white.opacity(0.8))
+                        .foregroundColor(.secondary)
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
-                .background(
-                    Capsule()
-                        .fill(Color.black.opacity(0.6))
-                )
+                .glassEffect(.regular, in: .capsule)
                 .padding(.trailing, 20)
             }
             .padding(.top, 60)
@@ -220,40 +252,52 @@ struct ScanView: View {
     // MARK: - Analyzing Overlay
     
     private var analyzingOverlay: some View {
-        VStack(spacing: 20) {
-            Spacer()
-            
-            VStack(spacing: 16) {
+        VStack(alignment: .leading, spacing: 32) {
+            // Header
+            VStack(alignment: .leading, spacing: 16) {
                 ProgressView()
-                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                    .scaleEffect(1.5)
+                    .progressViewStyle(CircularProgressViewStyle(tint: colorScheme == .dark ? .white : .black))
+                    .scaleEffect(1.3)
+                    .frame(width: 32, height: 32)
                 
-                Text("Analyzing artwork...")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.white)
+                Text("Analysing\nArtwork...")
+                    .font(.custom("NewYork", size: 42))
+                    .fontWeight(.semibold)
+                    .foregroundColor(colorScheme == .dark ? .white : .black)
                 
                 Text("Identifying the artist and details")
-                    .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.8))
+                    .font(.system(.title3))
+                    .foregroundColor(colorScheme == .dark ? Color.white.opacity(0.8) : Color.black.opacity(0.8))
             }
-            .padding(.horizontal, 40)
-            .padding(.vertical, 32)
-            .background(
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(Color.black.opacity(0.75))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 20)
-                            .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                    )
-            )
-            .shadow(color: Color.black.opacity(0.3), radius: 20, x: 0, y: 10)
             
-            Spacer()
+            // Detail rows
+            VStack(alignment: .leading, spacing: 20) {
+                AnalysingRow(
+                    icon: "paintpalette.fill",
+                    title: "Detecting Style",
+                    description: "Analysing brushwork and composition",
+                    colorScheme: colorScheme
+                )
+                AnalysingRow(
+                    icon: "person.fill",
+                    title: "Identifying Artist",
+                    description: "Matching against known works",
+                    colorScheme: colorScheme
+                )
+                AnalysingRow(
+                    icon: "clock.fill",
+                    title: "Dating the Piece",
+                    description: "Estimating period and movement",
+                    colorScheme: colorScheme
+                )
+            }
         }
+        .padding(28)
+        .glassEffect(.regular, in: .rect(cornerRadius: 24))
+        .padding(.horizontal, 20)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.black.opacity(0.3))
-        .transition(.opacity)
-        .animation(.easeInOut(duration: 0.3), value: isAnalyzing)
+        .transition(.move(edge: .bottom).combined(with: .opacity))
+        .animation(.spring(response: 0.4, dampingFraction: 0.85), value: isAnalyzing)
     }
     
     // MARK: - Permission View
@@ -320,6 +364,57 @@ struct ScanView: View {
         }
         
         return nil
+    }
+    
+    private func loadAndProcessPhoto(from item: PhotosPickerItem) async {
+        guard let imageData = try? await item.loadTransferable(type: Data.self),
+              let image = UIImage(data: imageData) else {
+            return
+        }
+        
+        // Freeze the selected image
+        frozenImage = image
+        isAnalyzing = true
+        
+        await viewModel.captureAndProcess(
+            image: image,
+            isProUser: subscriptionManager.isProUser,
+            scanLimitManager: scanLimitManager,
+            historyManager: historyManager
+        )
+        
+        isAnalyzing = false
+        showResult = true
+        selectedPhotoItem = nil // Reset selection
+    }
+}
+
+// MARK: - Analysing Row
+
+struct AnalysingRow: View {
+    let icon: String
+    let title: String
+    let description: String
+    let colorScheme: ColorScheme
+    
+    var body: some View {
+        HStack(alignment: .top, spacing: 16) {
+            Image(systemName: icon)
+                .font(.system(size: 24))
+                .foregroundColor(colorScheme == .dark ? .white : .black)
+                .frame(width: 32)
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.system(.body))
+                    .fontWeight(.semibold)
+                    .foregroundColor(colorScheme == .dark ? .white : .black)
+                
+                Text(description)
+                    .font(.system(.subheadline))
+                    .foregroundColor(colorScheme == .dark ? Color.white.opacity(0.7) : Color.black.opacity(0.7))
+            }
+        }
     }
 }
 

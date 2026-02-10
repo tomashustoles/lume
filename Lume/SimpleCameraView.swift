@@ -17,8 +17,13 @@ struct SimpleCameraView: View {
     var body: some View {
         ZStack {
             // Camera preview
-            CameraPreviewView(session: viewModel.captureSession)
-                .ignoresSafeArea()
+            if let session = viewModel.captureSession {
+                CameraPreviewView(session: session)
+                    .ignoresSafeArea()
+            } else {
+                Color.black
+                    .ignoresSafeArea()
+            }
             
             // Square scan area overlay
             GeometryReader { geometry in
@@ -80,7 +85,16 @@ struct SimpleCameraView: View {
             }
         }
         .onAppear {
-            viewModel.startSession()
+            // Setup camera when view appears (this triggers permission request)
+            // Add a small delay to ensure camera is available after app launch
+            Task { @MainActor in
+                // Small delay to allow system to release camera lock from previous session
+                try? await Task.sleep(for: .milliseconds(100))
+                viewModel.setupCameraIfNeeded()
+                // Additional small delay before starting session
+                try? await Task.sleep(for: .milliseconds(50))
+                viewModel.startSession()
+            }
         }
         .onDisappear {
             viewModel.stopSession()

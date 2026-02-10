@@ -57,7 +57,7 @@
             parallelizable = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "35C60A3A2F2C09A0002C86C0"
+               BlueprintIdentifier = "35BC2BFC2F2994B700774EBA"
                BuildableName = "LumeUITests.xctest"
                BlueprintName = "LumeUITests"
                ReferencedContainer = "container:Lume.xcodeproj">
@@ -68,7 +68,7 @@
             parallelizable = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "35C60A302F2C09A0002C86C0"
+               BlueprintIdentifier = "35BC2BF22F2994B700774EBA"
                BuildableName = "LumeTests.xctest"
                BlueprintName = "LumeTests"
                ReferencedContainer = "container:Lume.xcodeproj">
