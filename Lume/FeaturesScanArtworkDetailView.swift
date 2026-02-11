@@ -16,7 +16,6 @@ struct ArtworkDetailView: View {
     @EnvironmentObject var historyManager: HistoryManager
     @State private var isFavorite: Bool
     @State private var displayImage: UIImage?
-    @State private var isFetchingImage = false
     
     init(artwork: Artwork, onDismiss: @escaping () -> Void, onNavigateToCollection: (() -> Void)? = nil) {
         self.artwork = artwork
@@ -179,58 +178,18 @@ struct ArtworkDetailView: View {
         .presentationDragIndicator(.visible)
         .presentationCornerRadius(20)
         .task(id: artwork.id) {
-            // First, load the captured image as a fallback
-            var capturedImage: UIImage?
-            if let capturedData = artwork.capturedImageData, let image = UIImage(data: capturedData) {
-                capturedImage = image.fixedOrientation()
-                // Set as initial display image while we fetch
-                displayImage = capturedImage
-                print("✅ Loaded captured image for: \(artwork.title)")
-            } else if let imageData = artwork.imageData, let image = UIImage(data: imageData) {
-                capturedImage = image.fixedOrientation()
-                displayImage = capturedImage
-                print("✅ Loaded image from artwork data for: \(artwork.title)")
-            }
-            
-            // If no captured image available, we can't proceed
-            guard let capturedImage = capturedImage else {
+            // Load the image from artwork.imageData (which already contains the correct image
+            // - either the fetched original painting if it matched, or the captured image if it didn't)
+            if let imageData = artwork.imageData, let image = UIImage(data: imageData) {
+                displayImage = image.fixedOrientation()
+                print("✅ Loaded image from artwork.imageData for: \(artwork.title)")
+            } else if let capturedData = artwork.capturedImageData, let image = UIImage(data: capturedData) {
+                // Fallback to captured image if imageData is not available
+                displayImage = image.fixedOrientation()
+                print("✅ Loaded captured image as fallback for: \(artwork.title)")
+            } else {
                 print("⚠️ No image data available for: \(artwork.title)")
-                return
             }
-            
-            // Attempt to fetch the artwork image from internet
-            isFetchingImage = true
-            do {
-                let fetchedImage = try await GeminiService.shared.fetchArtworkImage(
-                    title: artwork.title,
-                    artist: artwork.artist
-                )
-                
-                if let fetchedImage = fetchedImage {
-                    let fixedFetchedImage = fetchedImage.fixedOrientation()
-                    
-                    // Compare fetched image with captured image
-                    if fixedFetchedImage.isSimilar(to: capturedImage) {
-                        // Images are similar (same artwork) - show the fetched image
-                        print("✅ Found image is similar to captured - showing fetched image for: \(artwork.title)")
-                        displayImage = fixedFetchedImage
-                    } else {
-                        // Images are different (wrong artwork found) - show captured image
-                        print("⚠️ Found image is different from captured - showing captured image for: \(artwork.title)")
-                        displayImage = capturedImage
-                    }
-                } else {
-                    // Fetch returned nil - show captured image
-                    print("⚠️ Could not fetch artwork image - showing captured image for: \(artwork.title)")
-                    displayImage = capturedImage
-                }
-            } catch {
-                // Fetch failed - show captured image
-                print("❌ Error fetching artwork image: \(error.localizedDescription) - showing captured image for: \(artwork.title)")
-                displayImage = capturedImage
-            }
-            
-            isFetchingImage = false
         }
     }
     
@@ -250,19 +209,14 @@ struct ArtworkDetailView: View {
                         .clipped()
                         .transition(.opacity.animation(.easeIn(duration: 0.4)))
                 } else {
-                    // Placeholder while the image loads
+                    // Placeholder when no image is available
                     Rectangle()
                         .fill(Color(.secondarySystemBackground))
                         .frame(width: width, height: width)
                         .overlay {
-                            if isFetchingImage {
-                                ProgressView()
-                                    .scaleEffect(1.5)
-                            } else {
-                                Image(systemName: "photo.artframe")
-                                    .font(.system(size: 60))
-                                    .foregroundColor(.secondary)
-                            }
+                            Image(systemName: "photo.artframe")
+                                .font(.system(size: 60))
+                                .foregroundColor(.secondary)
                         }
                 }
                 
