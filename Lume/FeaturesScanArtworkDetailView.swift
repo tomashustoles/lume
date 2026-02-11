@@ -44,15 +44,15 @@ struct ArtworkDetailView: View {
                         // Info description
                         VStack(alignment: .leading, spacing: 12) {
                             Text("ABOUT")
-                                .font(.system(.caption))
+                                .font(.system(.subheadline))
                                 .fontWeight(.semibold)
                                 .foregroundColor(colorScheme == .dark ? Color.white.opacity(0.5) : Color.black.opacity(0.5))
                                 .tracking(1)
                             
                             Text(artwork.description)
-                                .font(.system(.body))
+                                .font(.system(.title3))
                                 .foregroundColor(colorScheme == .dark ? Color.white.opacity(0.7) : Color.black.opacity(0.7))
-                                .lineSpacing(10)
+                                .lineSpacing(6)
                         }
                         
                         Divider()
@@ -60,15 +60,15 @@ struct ArtworkDetailView: View {
                         // Story
                         VStack(alignment: .leading, spacing: 12) {
                             Text("STORY")
-                                .font(.system(.caption))
+                                .font(.system(.subheadline))
                                 .fontWeight(.semibold)
                                 .foregroundColor(colorScheme == .dark ? Color.white.opacity(0.5) : Color.black.opacity(0.5))
                                 .tracking(1)
                             
                             Text(artwork.storyMode)
-                                .font(.system(.body))
+                                .font(.system(.title3))
                                 .foregroundColor(colorScheme == .dark ? Color.white.opacity(0.7) : Color.black.opacity(0.7))
-                                .lineSpacing(10)
+                                .lineSpacing(6)
                                 .italic()
                         }
                         
@@ -77,15 +77,15 @@ struct ArtworkDetailView: View {
                         // Cultural Context
                         VStack(alignment: .leading, spacing: 12) {
                             Text("CULTURAL CONTEXT")
-                                .font(.system(.caption))
+                                .font(.system(.subheadline))
                                 .fontWeight(.semibold)
                                 .foregroundColor(colorScheme == .dark ? Color.white.opacity(0.5) : Color.black.opacity(0.5))
                                 .tracking(1)
                             
                             Text(artwork.culturalContext)
-                                .font(.system(.body))
+                                .font(.system(.title3))
                                 .foregroundColor(colorScheme == .dark ? Color.white.opacity(0.7) : Color.black.opacity(0.7))
-                                .lineSpacing(10)
+                                .lineSpacing(6)
                         }
                         
                         // Navigation options
