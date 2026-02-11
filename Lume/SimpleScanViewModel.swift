@@ -195,11 +195,15 @@ class SimpleScanViewModel: NSObject, ObservableObject {
     ) async {
         print("🔵 capturePhoto called - isProUser: \(isProUser)")
         
-        // Don't allow capture if already processing or showing result
-        guard !isProcessing, !showResult else {
-            print("⚠️ Already processing or showing result, ignoring capture request")
+        // Don't allow capture if already processing
+        guard !isProcessing else {
+            print("⚠️ Already processing, ignoring capture request")
             return
         }
+        
+        // Reset previous result state to allow new scan
+        showResult = false
+        recognizedArtwork = nil
         
         // Store for later use
         pendingIsProUser = isProUser
@@ -274,32 +278,20 @@ class SimpleScanViewModel: NSObject, ObservableObject {
     
     private func processImage(_ image: UIImage, historyManager: HistoryManager) async {
         do {
-            // Crop to square
-            let croppedImage = cropToSquare(image)
+            // Fix orientation first, then crop to square
+            let fixedImage = image.fixedOrientation()
+            let croppedImage = cropToSquare(fixedImage)
             
             // Send to Gemini
             let result = try await geminiService.recognizeArtwork(image: croppedImage)
             
-            // Always save the captured image
+            // Always save the captured image as the primary image
+            // Using captured image prevents showing wrong artwork images from internet
             let capturedImageData = croppedImage.jpegData(compressionQuality: 0.8)
             
-            // Try to fetch the real artwork image (non-blocking, don't fail if it doesn't work)
-            var finalImageData: Data?
-            do {
-                if let realImage = try await geminiService.fetchArtworkImage(title: result.title, artist: result.artist) {
-                    // Use the real artwork image
-                    finalImageData = realImage.jpegData(compressionQuality: 0.8)
-                    print("✅ Using fetched artwork image")
-                } else {
-                    // Fall back to the captured image if we can't find the real one
-                    finalImageData = capturedImageData
-                    print("⚠️ Using captured image as fallback (artwork image not found)")
-                }
-            } catch {
-                // If image fetch fails, just use captured image
-                print("⚠️ Image fetch failed: \(error.localizedDescription), using captured image")
-                finalImageData = capturedImageData
-            }
+            // Use captured image as primary - don't fetch from internet to avoid confusion
+            // The captured image is what the user actually scanned, which is more accurate
+            let finalImageData = capturedImageData
             
             // Save to history
             let artwork = Artwork(
@@ -316,19 +308,28 @@ class SimpleScanViewModel: NSObject, ObservableObject {
                 capturedImageData: capturedImageData // Always save captured image
             )
             
-            await historyManager.addArtwork(artwork)
-            
-            // Set recognized artwork and show sheet
+            // Set recognized artwork BEFORE saving to history
+            // This ensures the sheet can be shown even if saving fails
             recognizedArtwork = artwork
             isProcessing = false
             
+            // Save to history (non-blocking for sheet presentation)
+            Task {
+                await historyManager.addArtwork(artwork)
+            }
+            
+            // Ensure we're on MainActor for UI updates
+            await MainActor.run {
+                // Reset showResult first to ensure sheet can be shown again
+                showResult = false
+            }
+            
             // Small delay to ensure UI is ready before showing sheet
-            // Also check that we're not already showing a result
-            try? await Task.sleep(for: .milliseconds(300))
-            if !showResult {
+            try? await Task.sleep(for: .milliseconds(150))
+            
+            // Show the sheet on MainActor
+            await MainActor.run {
                 showResult = true
-            } else {
-                print("⚠️ Sheet already showing, skipping presentation")
             }
             
             // Haptic feedback
@@ -336,22 +337,25 @@ class SimpleScanViewModel: NSObject, ObservableObject {
             generator.notificationOccurred(.success)
             
         } catch {
-            isProcessing = false
-            recognizedArtwork = nil
-            showResult = false
-            
-            // Log detailed error information
-            print("❌ Error in processImage: \(error)")
-            if let geminiError = error as? GeminiError {
-                print("❌ GeminiError type: \(geminiError)")
+            // Ensure we're on MainActor for UI updates
+            await MainActor.run {
+                isProcessing = false
+                recognizedArtwork = nil
+                showResult = false
+                
+                // Log detailed error information
+                print("❌ Error in processImage: \(error)")
+                if let geminiError = error as? GeminiError {
+                    print("❌ GeminiError type: \(geminiError)")
+                }
+                print("❌ Error description: \(error.localizedDescription)")
+                
+                errorMessage = error.localizedDescription
+                showError = true
+                
+                let generator = UINotificationFeedbackGenerator()
+                generator.notificationOccurred(.error)
             }
-            print("❌ Error description: \(error.localizedDescription)")
-            
-            errorMessage = error.localizedDescription
-            showError = true
-            
-            let generator = UINotificationFeedbackGenerator()
-            generator.notificationOccurred(.error)
         }
     }
     
@@ -369,7 +373,8 @@ class SimpleScanViewModel: NSObject, ObservableObject {
             return image
         }
         
-        return UIImage(cgImage: cgImage, scale: image.scale, orientation: image.imageOrientation)
+        // Return with .up orientation since we've already fixed orientation before cropping
+        return UIImage(cgImage: cgImage, scale: image.scale, orientation: .up)
     }
     
     private func determineFrameStyle(from period: String) -> FrameStyle {

@@ -508,11 +508,11 @@ extension CameraViewController: AVCapturePhotoCaptureDelegate {
             return
         }
         
-        // The orientation is now handled by setting videoOrientation on the connection
-        // before capture, so we don't need to call fixedOrientation() anymore
+        // Fix orientation FIRST before cropping to ensure correct dimensions
+        let fixedImage = image.fixedOrientation()
         
-        // Crop to square (center crop)
-        let croppedImage = cropToSquare(image)
+        // Crop to square (center crop) - now using correctly oriented image
+        let croppedImage = cropToSquare(fixedImage)
         
         DispatchQueue.main.async {
             self.delegate?.didCaptureImage(croppedImage)
@@ -520,6 +520,7 @@ extension CameraViewController: AVCapturePhotoCaptureDelegate {
     }
     
     private func cropToSquare(_ image: UIImage) -> UIImage {
+        // Image should already be fixed to .up orientation at this point
         let originalWidth = image.size.width
         let originalHeight = image.size.height
         
@@ -534,6 +535,7 @@ extension CameraViewController: AVCapturePhotoCaptureDelegate {
             return image
         }
         
+        // Return with .up orientation since we've already fixed orientation before cropping
         return UIImage(cgImage: cgImage, scale: image.scale, orientation: .up)
     }
 }

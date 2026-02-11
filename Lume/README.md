@@ -130,10 +130,15 @@ Museum Companion/
 ### Configuration
 
 #### Gemini API
-Configure your Gemini API key as an environment variable in Xcode:
-1. Edit Scheme → Run → Arguments → Environment Variables
-2. Add `GEMINI_API_KEY` with your API key value
+The app uses xcconfig files for secure API key management. This ensures API keys are never committed to git and work in both development and TestFlight builds.
+
+**Quick Setup:**
+1. Copy `Config.local.xcconfig.example` to `Config.local.xcconfig`
+2. Add your Gemini API key to `Config.local.xcconfig`
 3. Get your key from: https://aistudio.google.com/app/apikey
+4. In Xcode, add `Config.xcconfig` to the project and apply it to build configurations
+
+**Detailed instructions:** See [SETUP.md](SETUP.md) for complete setup guide.
 
 #### StoreKit Configuration
 1. Create a StoreKit configuration file in Xcode

@@ -171,7 +171,7 @@ struct ArtworkRow: View {
             if let imageData = artwork.imageData,
                let uiImage = UIImage(data: imageData) {
                 ZStack {
-                    Image(uiImage: uiImage)
+                    Image(uiImage: uiImage.fixedOrientation())
                         .resizable()
                         .aspectRatio(contentMode: .fill)
                         .frame(width: 80, height: 80)

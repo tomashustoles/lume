@@ -43,30 +43,32 @@ struct ArtworkDetailView: View {
                         
                         // Info description
                         VStack(alignment: .leading, spacing: 12) {
-                            Text("About the Artwork")
-                                .font(.system(.body))
+                            Text("ABOUT")
+                                .font(.system(.caption))
                                 .fontWeight(.semibold)
-                                .foregroundColor(colorScheme == .dark ? .white : .black)
+                                .foregroundColor(colorScheme == .dark ? Color.white.opacity(0.5) : Color.black.opacity(0.5))
+                                .tracking(1)
                             
                             Text(artwork.description)
-                                .font(.system(.subheadline))
+                                .font(.system(.body))
                                 .foregroundColor(colorScheme == .dark ? Color.white.opacity(0.7) : Color.black.opacity(0.7))
-                                .lineSpacing(6)
+                                .lineSpacing(10)
                         }
                         
                         Divider()
                         
                         // Story
                         VStack(alignment: .leading, spacing: 12) {
-                            Text("The Story")
-                                .font(.system(.body))
+                            Text("STORY")
+                                .font(.system(.caption))
                                 .fontWeight(.semibold)
-                                .foregroundColor(colorScheme == .dark ? .white : .black)
+                                .foregroundColor(colorScheme == .dark ? Color.white.opacity(0.5) : Color.black.opacity(0.5))
+                                .tracking(1)
                             
                             Text(artwork.storyMode)
-                                .font(.system(.subheadline))
+                                .font(.system(.body))
                                 .foregroundColor(colorScheme == .dark ? Color.white.opacity(0.7) : Color.black.opacity(0.7))
-                                .lineSpacing(8)
+                                .lineSpacing(10)
                                 .italic()
                         }
                         
@@ -74,15 +76,16 @@ struct ArtworkDetailView: View {
                         
                         // Cultural Context
                         VStack(alignment: .leading, spacing: 12) {
-                            Text("Cultural Context")
-                                .font(.system(.body))
+                            Text("CULTURAL CONTEXT")
+                                .font(.system(.caption))
                                 .fontWeight(.semibold)
-                                .foregroundColor(colorScheme == .dark ? .white : .black)
+                                .foregroundColor(colorScheme == .dark ? Color.white.opacity(0.5) : Color.black.opacity(0.5))
+                                .tracking(1)
                             
                             Text(artwork.culturalContext)
-                                .font(.system(.subheadline))
+                                .font(.system(.body))
                                 .foregroundColor(colorScheme == .dark ? Color.white.opacity(0.7) : Color.black.opacity(0.7))
-                                .lineSpacing(6)
+                                .lineSpacing(10)
                         }
                         
                         // Navigation options
@@ -176,23 +179,57 @@ struct ArtworkDetailView: View {
         .presentationDragIndicator(.visible)
         .presentationCornerRadius(20)
         .task(id: artwork.id) {
-            // Load image from artwork data first
-            if let imageData = artwork.imageData, let image = UIImage(data: imageData) {
-                print("✅ Loaded image from artwork.imageData for: \(artwork.title)")
-                displayImage = image
+            // First, load the captured image as a fallback
+            var capturedImage: UIImage?
+            if let capturedData = artwork.capturedImageData, let image = UIImage(data: capturedData) {
+                capturedImage = image.fixedOrientation()
+                // Set as initial display image while we fetch
+                displayImage = capturedImage
+                print("✅ Loaded captured image for: \(artwork.title)")
+            } else if let imageData = artwork.imageData, let image = UIImage(data: imageData) {
+                capturedImage = image.fixedOrientation()
+                displayImage = capturedImage
+                print("✅ Loaded image from artwork data for: \(artwork.title)")
+            }
+            
+            // If no captured image available, we can't proceed
+            guard let capturedImage = capturedImage else {
+                print("⚠️ No image data available for: \(artwork.title)")
                 return
             }
             
-            // If no image data exists, try to fetch the artwork image
-            guard !isFetchingImage else { return }
+            // Attempt to fetch the artwork image from internet
             isFetchingImage = true
-            print("🖼️ Fetching real artwork image for: \(artwork.title) by \(artwork.artist)")
-            if let fetched = try? await GeminiService.shared.fetchArtworkImage(title: artwork.title, artist: artwork.artist) {
-                print("✅ Got real artwork image")
-                displayImage = fetched
-            } else {
-                print("❌ Failed to fetch real artwork image")
+            do {
+                let fetchedImage = try await GeminiService.shared.fetchArtworkImage(
+                    title: artwork.title,
+                    artist: artwork.artist
+                )
+                
+                if let fetchedImage = fetchedImage {
+                    let fixedFetchedImage = fetchedImage.fixedOrientation()
+                    
+                    // Compare fetched image with captured image
+                    if fixedFetchedImage.isSimilar(to: capturedImage) {
+                        // Images are similar (same artwork) - show the fetched image
+                        print("✅ Found image is similar to captured - showing fetched image for: \(artwork.title)")
+                        displayImage = fixedFetchedImage
+                    } else {
+                        // Images are different (wrong artwork found) - show captured image
+                        print("⚠️ Found image is different from captured - showing captured image for: \(artwork.title)")
+                        displayImage = capturedImage
+                    }
+                } else {
+                    // Fetch returned nil - show captured image
+                    print("⚠️ Could not fetch artwork image - showing captured image for: \(artwork.title)")
+                    displayImage = capturedImage
+                }
+            } catch {
+                // Fetch failed - show captured image
+                print("❌ Error fetching artwork image: \(error.localizedDescription) - showing captured image for: \(artwork.title)")
+                displayImage = capturedImage
             }
+            
             isFetchingImage = false
         }
     }

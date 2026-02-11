@@ -80,14 +80,12 @@ class ScanViewModel: ObservableObject {
             // Stop animation on final frame
             stopFrameAnimation()
             
-            // Always store the captured image separately
+            // Always store the captured image as the primary image
+            // Using captured image prevents showing wrong artwork images from internet
             let capturedImageData = image.jpegData(compressionQuality: 0.8)
             
-            // Try to fetch the real artwork image
-            var finalImageData: Data?
-            if let realImage = try await geminiService.fetchArtworkImage(title: result.title, artist: result.artist) {
-                finalImageData = realImage.jpegData(compressionQuality: 0.8)
-            }
+            // Use captured image as primary - don't fetch from internet to avoid confusion
+            let finalImageData = capturedImageData
             
             // Create artwork
             let artwork = Artwork(

@@ -95,8 +95,6 @@ A **production-ready iOS app** that transforms museum experiences by recognizing
 - Cultural context
 - Estimated period for frame matching
 
-**API Key included:** `AIzaSyBY-nXv11y61eQOrqhZHo4Maau1gCc6AOA`
-
 ### ✅ Free / Pro System
 - **Free tier**: 3 scans per day
 - **Pro tier**: Unlimited scans

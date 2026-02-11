@@ -145,35 +145,38 @@ Task {
 
 #### Gemini API
 
-Current implementation uses embedded API key:
-```swift
-private let apiKey = "AIzaSyBY-nXv11y61eQOrqhZHo4Maau1gCc6AOA"
-```
+The app uses xcconfig files for secure API key management. This approach:
+- Keeps API keys out of source code and git
+- Works for both development (Xcode) and distribution (TestFlight) builds
+- Allows each developer to use their own key
+- Supports CI/CD integration
 
-**For Production**:
+**Setup Instructions**:
 
-Option 1: Environment Variables
-```swift
-private let apiKey = ProcessInfo.processInfo.environment["GEMINI_API_KEY"] ?? ""
-```
+1. **Get Your Gemini API Key**:
+   - Go to https://aistudio.google.com/app/apikey
+   - Create a new API key
+   - Copy the key
 
-Option 2: Secrets File (not in git)
-```swift
-// Secrets.swift (add to .gitignore)
-enum Secrets {
-    static let geminiAPIKey = "YOUR_KEY_HERE"
-}
-```
+2. **Configure Local xcconfig**:
+   - Copy `Config.local.xcconfig.example` to `Config.local.xcconfig`
+   - Add your API key to `Config.local.xcconfig`
+   - This file is gitignored and will not be committed
 
-Option 3: Server Proxy (recommended for production)
-- Create backend service
-- Proxy requests to Gemini
-- Add rate limiting
-- Monitor usage
+3. **Configure Xcode Project**:
+   - Add `Config.xcconfig` to your Xcode project
+   - Apply it to all build configurations (Debug, Release)
+   - The build system will inject the API key into Info.plist at build time
+
+4. **For CI/CD/TestFlight**:
+   - Set `GEMINI_API_KEY` as an environment variable in your build system
+   - Or create `Config.local.xcconfig` in CI with the API key from your secrets manager
+
+See `SETUP.md` for detailed setup instructions.
 
 #### Get Your Own Gemini API Key
 
-1. Go to https://makersuite.google.com/app/apikey
+1. Go to https://aistudio.google.com/app/apikey
 2. Create new API key
 3. Enable Gemini API
 4. Replace in `GeminiService.swift`
@@ -553,7 +556,7 @@ Priority levels:
 
 #### Code Security
 
-- [ ] API keys not in git (use environment variables)
+- [x] API keys not in git (using xcconfig files)
 - [ ] Validate all user input
 - [ ] Sanitize API responses
 - [ ] Use HTTPS only

@@ -61,7 +61,7 @@ struct ArtworkCard: View {
             // Image
             if let imageData = artwork.imageData,
                let uiImage = UIImage(data: imageData) {
-                Image(uiImage: uiImage)
+                Image(uiImage: uiImage.fixedOrientation())
                     .resizable()
                     .aspectRatio(contentMode: .fill)
                     .frame(height: 300)

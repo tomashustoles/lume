@@ -28,6 +28,14 @@ struct LumeApp: App {
                     .environmentObject(scanLimitManager)
                     .environmentObject(historyManager)
                     .task {
+                        #if DEBUG
+                        // Check API key on launch (debug builds only)
+                        let apiKey = AppConfig.geminiAPIKey
+                        if apiKey.isEmpty {
+                            print("❌ CRITICAL: API key is empty on app launch!")
+                        }
+                        #endif
+                        
                         // Start subscription manager listeners
                         subscriptionManager.startListening()
                         

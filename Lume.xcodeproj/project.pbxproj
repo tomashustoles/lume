@@ -6,9 +6,6 @@
 	objectVersion = 77;
 	objects = {
 
-/* Begin PBXBuildFile section */
-/* End PBXBuildFile section */
-
 /* Begin PBXContainerItemProxy section */
 		35C60A982F2C0B06002C86C0 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -366,11 +363,15 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				GEMINI_API_KEY = "AIzaSyD4Yc8DhfKOc8pECpyynzjFg5TTj-9LtrU";
+				INFOPLIST_FILE = Lume/Info.plist;
+				INFOPLIST_KEY_GEMINI_API_KEY = "$(GEMINI_API_KEY)";
 				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = txh.Lume;
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -424,10 +425,14 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				GEMINI_API_KEY = "AIzaSyD4Yc8DhfKOc8pECpyynzjFg5TTj-9LtrU";
+				INFOPLIST_FILE = Lume/Info.plist;
+				INFOPLIST_KEY_GEMINI_API_KEY = "$(GEMINI_API_KEY)";
 				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = txh.Lume;
 				SDKROOT = iphoneos;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				VALIDATE_PRODUCT = YES;
@@ -527,7 +532,10 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = N38VM65LJJ;
 				ENABLE_PREVIEWS = YES;
+				GEMINI_API_KEY = "AIzaSyD4Yc8DhfKOc8pECpyynzjFg5TTj-9LtrU";
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Lume/Info.plist;
+				INFOPLIST_KEY_GEMINI_API_KEY = "$(GEMINI_API_KEY)";
 				INFOPLIST_KEY_NSCameraUsageDescription = "This app needs camera access to scan and identify artworks.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "This app needs photo library access to save scanned artworks.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -561,7 +569,10 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = N38VM65LJJ;
 				ENABLE_PREVIEWS = YES;
+				GEMINI_API_KEY = "AIzaSyD4Yc8DhfKOc8pECpyynzjFg5TTj-9LtrU";
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Lume/Info.plist;
+				INFOPLIST_KEY_GEMINI_API_KEY = "$(GEMINI_API_KEY)";
 				INFOPLIST_KEY_NSCameraUsageDescription = "This app needs camera access to scan and identify artworks.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "This app needs photo library access to save scanned artworks.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
