@@ -20,20 +20,6 @@ struct SplashView: View {
             
             // Content box - centered on screen but internally left-aligned
             VStack(alignment: .leading, spacing: 40) {
-                // Sparkles icon in rectangle - matching paywall style
-                ZStack {
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.white)
-                        .frame(width: 80, height: 80)
-                        .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
-                    
-                    Image(systemName: "sparkles")
-                        .font(.system(size: 40))
-                        .foregroundColor(.black)
-                }
-                .scaleEffect(showContent ? 1.0 : 0.9)
-                .opacity(showContent ? 1.0 : 0.0)
-                
                 // Main instruction - left aligned
                 VStack(alignment: .leading, spacing: 20) {
                     Text("Recognize\nAny Artwork")

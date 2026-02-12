@@ -144,57 +144,6 @@ struct ProfileView: View {
                             .foregroundColor(.secondary)
                     }
                 }
-                
-                // API Key Debug (for TestFlight)
-                Section("API Key Status") {
-                    let apiKey = AppConfig.geminiAPIKey
-                    let infoDict = Bundle.main.infoDictionary
-                    let plistKey = infoDict?["GEMINI_API_KEY"] as? String
-                    
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text("Status:")
-                            Spacer()
-                            Text(apiKey.isEmpty ? "❌ Missing" : "✅ Found")
-                                .foregroundColor(apiKey.isEmpty ? .red : .green)
-                        }
-                        
-                        if !apiKey.isEmpty {
-                            Text("Length: \(apiKey.count) characters")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            Text("Prefix: \(String(apiKey.prefix(10)))...")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                        
-                        Divider()
-                        
-                        Text("Info.plist Status:")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        
-                        if let plistKey = plistKey {
-                            Text("Found in Info.plist: \(plistKey.isEmpty ? "Empty" : "\(plistKey.count) chars")")
-                                .font(.caption)
-                                .foregroundColor(plistKey.isEmpty ? .red : .green)
-                            if plistKey == "$(GEMINI_API_KEY)" {
-                                Text("⚠️ Still contains placeholder!")
-                                    .font(.caption)
-                                    .foregroundColor(.orange)
-                            }
-                        } else {
-                            Text("❌ Not found in Info.plist")
-                                .font(.caption)
-                                .foregroundColor(.red)
-                        }
-                        
-                        Text("Available keys: \(infoDict?.keys.sorted().joined(separator: ", ") ?? "none")")
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
-                            .lineLimit(3)
-                    }
-                }
             }
             .listStyle(.insetGrouped)
             .background(Color(uiColor: .systemGroupedBackground))

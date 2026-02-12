@@ -5,5 +5,8 @@
 	<!-- GEMINI_API_KEY will be injected via INFOPLIST_KEY_GEMINI_API_KEY build setting -->
 	<key>GEMINI_API_KEY</key>
 	<string>$(GEMINI_API_KEY)</string>
+	<!-- Export Compliance: App only uses standard encryption provided by Apple's OS (HTTPS/TLS, CloudKit, StoreKit) -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>

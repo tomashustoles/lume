@@ -83,34 +83,27 @@ class ScanViewModel: ObservableObject {
             // Always save the captured image
             let capturedImageData = image.jpegData(compressionQuality: 0.8)
             
-            // Fetch the original painting image from the internet
-            var finalImageData = capturedImageData // Default to captured image
+            // Fetch the original painting image from Wikipedia/Wikimedia
+            var finalImageData = capturedImageData // Default to captured photo as fallback
+            print("🖼️ Fetching original artwork image for: '\(result.title)' by '\(result.artist)'")
             do {
                 if let fetchedImage = try await geminiService.fetchArtworkImage(
                     title: result.title,
                     artist: result.artist
                 ) {
+                    // Use the fetched original - museum photos won't match pixel-wise with reproductions,
+                    // so we trust the fetch when we find an image for the recognized title+artist
+                    print("✅ Found original artwork image - using it for: \(result.title)")
                     let fixedFetchedImage = fetchedImage.fixedOrientation()
-                    let fixedCapturedImage = image.fixedOrientation()
-                    
-                    // Compare fetched image with captured image
-                    if fixedFetchedImage.isSimilar(to: fixedCapturedImage) {
-                        // Images are similar (same artwork) - use the fetched original painting
-                        print("✅ Found image is similar to captured - using fetched image for: \(result.title)")
-                        finalImageData = fixedFetchedImage.jpegData(compressionQuality: 0.8)
-                    } else {
-                        // Images are different (wrong artwork found) - use captured image
-                        print("⚠️ Found image is different from captured - using captured image for: \(result.title)")
-                        finalImageData = capturedImageData
-                    }
+                    finalImageData = fixedFetchedImage.jpegData(compressionQuality: 0.8)
                 } else {
-                    // Fetch returned nil - use captured image
-                    print("⚠️ Could not fetch artwork image - using captured image for: \(result.title)")
+                    // No image found online - use captured photo
+                    print("⚠️ Could not find artwork image online - using captured photo for: \(result.title)")
                     finalImageData = capturedImageData
                 }
             } catch {
-                // Fetch failed - use captured image as safe fallback
-                print("❌ Error fetching artwork image: \(error.localizedDescription) - using captured image for: \(result.title)")
+                // Fetch failed - use captured photo as fallback
+                print("❌ Error fetching artwork image: \(error.localizedDescription) - using captured photo for: \(result.title)")
                 finalImageData = capturedImageData
             }
             

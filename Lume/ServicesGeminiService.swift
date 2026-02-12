@@ -421,13 +421,29 @@ final class GeminiService {
     // MARK: - Fetch Artwork Image
     
     func fetchArtworkImage(title: String, artist: String) async throws -> UIImage? {
-        // Strategy 1: Try Wikipedia page image (most reliable for famous artworks)
-        if let image = await fetchWikipediaImage(query: "\(title) \(artist)") {
+        // Try multiple strategies - Wikipedia pages for artworks are usually titled with artwork name only
+        // Strategy 1: Wikipedia with artwork title only (e.g. "The Great Wave off Kanagawa")
+        if let image = await fetchWikipediaImage(titles: title) {
             return image
         }
         
-        // Strategy 2: Try Wikimedia Commons direct file search
-        if let image = await fetchWikimediaCommonsImage(title: title, artist: artist) {
+        // Strategy 2: Wikipedia with "title (artist)" format
+        if let image = await fetchWikipediaImage(titles: "\(title) (\(artist))") {
+            return image
+        }
+        
+        // Strategy 3: Wikipedia with title + artist
+        if let image = await fetchWikipediaImage(titles: "\(title) \(artist)") {
+            return image
+        }
+        
+        // Strategy 4: Wikimedia Commons - try title only first
+        if let image = await fetchWikimediaCommonsImage(query: title) {
+            return image
+        }
+        
+        // Strategy 5: Wikimedia Commons with full search
+        if let image = await fetchWikimediaCommonsImage(query: "\(title) \(artist)") {
             return image
         }
         
@@ -435,15 +451,15 @@ final class GeminiService {
         return nil
     }
     
-    private func fetchWikipediaImage(query: String) async -> UIImage? {
-        let encoded = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+    private func fetchWikipediaImage(titles: String) async -> UIImage? {
+        let encoded = titles.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
         let urlString = "https://en.wikipedia.org/w/api.php?action=query&format=json&prop=pageimages&piprop=original&titles=\(encoded)&redirects=1"
         
         guard let url = URL(string: urlString) else { return nil }
         
         do {
             let (data, _) = try await URLSession.shared.data(from: url)
-            print("📷 Wikipedia response for '\(query)': \(String(data: data, encoding: .utf8)?.prefix(500) ?? "nil")")
+            print("📷 Wikipedia lookup for '\(titles)': \(String(data: data, encoding: .utf8)?.prefix(300) ?? "nil")")
             
             if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                let queryObj = json["query"] as? [String: Any],
@@ -466,9 +482,8 @@ final class GeminiService {
         return nil
     }
     
-    private func fetchWikimediaCommonsImage(title: String, artist: String) async -> UIImage? {
+    private func fetchWikimediaCommonsImage(query: String) async -> UIImage? {
         // Search Wikimedia Commons for the artwork file directly
-        let query = "\(title) \(artist)"
         let encoded = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
         let urlString = "https://commons.wikimedia.org/w/api.php?action=query&format=json&list=search&srsearch=\(encoded)&srnamespace=6&srlimit=1&prop=imageinfo&iiprop=url"
         
