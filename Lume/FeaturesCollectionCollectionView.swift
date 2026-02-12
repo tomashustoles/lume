@@ -18,6 +18,7 @@ struct CollectionView: View {
     @State private var searchText = ""
     @State private var showFavoritesOnly = false
     @State private var selectedArtworkWrapper: IdentifiableUUID?
+    @State private var artworkToDelete: Artwork?
     
     private var filteredArtworks: [Artwork] {
         let artworks = showFavoritesOnly ? historyManager.favorites : historyManager.artworks
@@ -35,46 +36,32 @@ struct CollectionView: View {
                 if filteredArtworks.isEmpty {
                     emptyState
                 } else {
-                    ScrollView {
-                        LazyVStack(spacing: 0) {
-                            ForEach(filteredArtworks) { artwork in
-                                ArtworkRow(artwork: artwork, colorScheme: colorScheme)
-                                    .onTapGesture {
-                                        print("🔵 CollectionView - Tapped artwork: '\(artwork.title)' by '\(artwork.artist)', ID: \(artwork.id)")
-                                        print("🔵 Artwork has imageData: \(artwork.imageData != nil), description: '\(artwork.description.prefix(50))...'")
-                                        print("🔵 Current historyManager.artworks count: \(historyManager.artworks.count)")
-                                        selectedArtworkWrapper = IdentifiableUUID(id: artwork.id)
-                                    }
-                                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                                        Button(role: .destructive) {
-                                            Task {
-                                                await historyManager.deleteArtwork(artwork)
-                                            }
-                                        } label: {
-                                            Label("Delete", systemImage: "trash")
-                                        }
-                                        
-                                        Button {
-                                            Task {
-                                                await historyManager.toggleFavorite(for: artwork.id)
-                                            }
-                                        } label: {
-                                            Label(
-                                                artwork.isFavorite ? "Unfavorite" : "Favorite",
-                                                systemImage: artwork.isFavorite ? "heart.slash" : "heart"
-                                            )
-                                        }
-                                        .tint(.pink)
-                                    }
-                                
-                                if artwork.id != filteredArtworks.last?.id {
+                    List {
+                        ForEach(Array(filteredArtworks.enumerated()), id: \.element.id) { index, artwork in
+                            SwipeableArtworkRow(
+                                artwork: artwork,
+                                colorScheme: colorScheme,
+                                onTap: { selectedArtworkWrapper = IdentifiableUUID(id: artwork.id) },
+                                onDelete: { artworkToDelete = artwork },
+                                onToggleFavorite: {
+                                    Task { await historyManager.toggleFavorite(for: artwork.id) }
+                                }
+                            )
+                            .overlay(alignment: .bottom) {
+                                if index < filteredArtworks.count - 1 {
                                     Divider()
                                         .padding(.leading, 24)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .allowsHitTesting(false)
                                 }
                             }
+                            .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                            .listRowSeparator(.hidden)
+                            .listRowBackground(colorScheme == .dark ? Color.black : Color.white)
                         }
-                        .padding(.vertical, 8)
                     }
+                    .listStyle(.plain)
+                    .scrollContentBackground(.hidden)
                     .refreshable {
                         await historyManager.syncFromCloud()
                     }
@@ -134,6 +121,22 @@ struct CollectionView: View {
                     .padding()
                 }
             }
+            .confirmationDialog("Are you sure you want to delete?", isPresented: Binding(
+                get: { artworkToDelete != nil },
+                set: { if !$0 { artworkToDelete = nil } }
+            ), titleVisibility: .visible) {
+                Button("Delete", role: .destructive) {
+                    if let artwork = artworkToDelete {
+                        Task {
+                            await historyManager.deleteArtwork(artwork)
+                            artworkToDelete = nil
+                        }
+                    }
+                }
+                Button("Cancel", role: .cancel) {
+                    artworkToDelete = nil
+                }
+            }
         }
     }
     
@@ -156,6 +159,83 @@ struct CollectionView: View {
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 40)
         }
+    }
+}
+
+// MARK: - Swipeable Artwork Row
+
+private struct SwipeableArtworkRow: View {
+    let artwork: Artwork
+    let colorScheme: ColorScheme
+    let onTap: () -> Void
+    let onDelete: () -> Void
+    let onToggleFavorite: () -> Void
+    
+    @State private var offset: CGFloat = 0
+    // Full reveal: 44 (heart) + 12 (spacing) + 44 (trash) + 20 (padding) = 120; add buffer for iPad
+    private let swipeRevealWidth: CGFloat = 136
+    
+    var body: some View {
+        GeometryReader { geometry in
+            ZStack(alignment: .trailing) {
+                // Action buttons (revealed on swipe) - styled exactly like header and sheet
+                HStack(spacing: 12) {
+                    Button(action: onToggleFavorite) {
+                        Image(systemName: artwork.isFavorite ? "heart.fill" : "heart")
+                            .font(.system(size: 24))
+                            .foregroundStyle(artwork.isFavorite ? .red : (colorScheme == .dark ? .white : .black))
+                            .symbolRenderingMode(.hierarchical)
+                    }
+                    .buttonStyle(.plain)
+                    .frame(width: 44, height: 44)
+                    .background(.ultraThinMaterial, in: Circle())
+                    
+                    Button(action: onDelete) {
+                        Image(systemName: "trash")
+                            .font(.system(size: 24))
+                            .foregroundStyle(.white)
+                            .symbolRenderingMode(.hierarchical)
+                    }
+                    .buttonStyle(.plain)
+                    .frame(width: 44, height: 44)
+                    .background(Color.red, in: Circle())
+                }
+                .padding(.trailing, 20)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+                .background(colorScheme == .dark ? Color.black : Color.white)
+                
+                // Row content
+                ArtworkRow(artwork: artwork, colorScheme: colorScheme)
+                    .background(colorScheme == .dark ? Color.black : Color.white)
+                    .contentShape(Rectangle())
+                    .offset(x: min(0, offset))
+                    .gesture(
+                        DragGesture()
+                            .onChanged { value in
+                                if value.translation.width < 0 {
+                                    offset = value.translation.width
+                                }
+                            }
+                            .onEnded { value in
+                                withAnimation(.easeOut(duration: 0.2)) {
+                                    if value.translation.width < -60 || value.predictedEndTranslation.width < -100 {
+                                        offset = -swipeRevealWidth
+                                    } else {
+                                        offset = 0
+                                    }
+                                }
+                            }
+                    )
+                    .onTapGesture {
+                        if offset < -20 {
+                            withAnimation(.easeOut(duration: 0.2)) { offset = 0 }
+                        } else {
+                            onTap()
+                        }
+                    }
+            }
+        }
+        .frame(height: 104)
     }
 }
 

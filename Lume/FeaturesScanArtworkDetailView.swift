@@ -16,6 +16,7 @@ struct ArtworkDetailView: View {
     @EnvironmentObject var historyManager: HistoryManager
     @State private var isFavorite: Bool
     @State private var displayImage: UIImage?
+    @State private var showDeleteConfirmation = false
     
     init(artwork: Artwork, onDismiss: @escaping () -> Void, onNavigateToCollection: (() -> Void)? = nil) {
         self.artwork = artwork
@@ -135,6 +136,28 @@ struct ArtworkDetailView: View {
                                 .background(colorScheme == .dark ? Color.white.opacity(0.1) : Color.black.opacity(0.05))
                                 .cornerRadius(12)
                             }
+                            
+                            // Delete recognized artwork
+                            Button {
+                                showDeleteConfirmation = true
+                            } label: {
+                                HStack {
+                                    Image(systemName: "trash")
+                                        .font(.system(.title3))
+                                    Text("Delete recognized artwork")
+                                        .font(.system(.body))
+                                        .fontWeight(.medium)
+                                    Spacer()
+                                    Image(systemName: "chevron.right")
+                                        .font(.system(.caption))
+                                        .fontWeight(.semibold)
+                                        .foregroundColor(colorScheme == .dark ? Color.white.opacity(0.4) : Color.black.opacity(0.4))
+                                }
+                                .foregroundColor(Color.red)
+                                .padding()
+                                .background(colorScheme == .dark ? Color.white.opacity(0.1) : Color.black.opacity(0.05))
+                                .cornerRadius(12)
+                            }
                         }
                         .padding(.top, 8)
                     }
@@ -177,6 +200,17 @@ struct ArtworkDetailView: View {
         }
         .presentationDragIndicator(.visible)
         .presentationCornerRadius(20)
+        .confirmationDialog("Are you sure you want to delete?", isPresented: $showDeleteConfirmation, titleVisibility: .visible) {
+            Button("Delete", role: .destructive) {
+                Task {
+                    await historyManager.deleteArtwork(artwork)
+                    onDismiss()
+                }
+            }
+            Button("Cancel", role: .cancel) {
+                showDeleteConfirmation = false
+            }
+        }
         .task(id: artwork.id) {
             // Load the image from artwork.imageData (which already contains the correct image
             // - either the fetched original painting if it matched, or the captured image if it didn't)
