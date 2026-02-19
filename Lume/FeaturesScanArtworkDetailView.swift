@@ -12,16 +12,20 @@ struct ArtworkDetailView: View {
     let artwork: Artwork
     let onDismiss: () -> Void
     let onNavigateToCollection: (() -> Void)?
+    let onNavigateToScan: (() -> Void)?
     
     @EnvironmentObject var historyManager: HistoryManager
     @State private var isFavorite: Bool
     @State private var displayImage: UIImage?
+    @State private var fetchedArtworkImage: UIImage?
+    @State private var showArtworkZoom = false
     @State private var showDeleteConfirmation = false
     
-    init(artwork: Artwork, onDismiss: @escaping () -> Void, onNavigateToCollection: (() -> Void)? = nil) {
+    init(artwork: Artwork, onDismiss: @escaping () -> Void, onNavigateToCollection: (() -> Void)? = nil, onNavigateToScan: (() -> Void)? = nil) {
         self.artwork = artwork
         self.onDismiss = onDismiss
         self.onNavigateToCollection = onNavigateToCollection
+        self.onNavigateToScan = onNavigateToScan
         _isFavorite = State(initialValue: artwork.isFavorite)
     }
     
@@ -49,10 +53,7 @@ struct ArtworkDetailView: View {
                                 .foregroundColor(colorScheme == .dark ? Color.white.opacity(0.5) : Color.black.opacity(0.5))
                                 .tracking(1)
                             
-                            Text(artwork.description)
-                                .font(.system(.title3))
-                                .foregroundColor(colorScheme == .dark ? Color.white.opacity(0.7) : Color.black.opacity(0.7))
-                                .lineSpacing(6)
+                            aboutDescriptionWithArtwork
                         }
                         
                         Divider()
@@ -115,9 +116,12 @@ struct ArtworkDetailView: View {
                                 .cornerRadius(12)
                             }
                             
-                            // Next artwork button (return to camera)
+                            // Scan Next Artwork - navigate to Scan tab
                             Button {
                                 onDismiss()
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                    onNavigateToScan?()
+                                }
                             } label: {
                                 HStack {
                                     Image(systemName: "camera")
@@ -200,6 +204,11 @@ struct ArtworkDetailView: View {
         }
         .presentationDragIndicator(.visible)
         .presentationCornerRadius(20)
+        .fullScreenCover(isPresented: $showArtworkZoom) {
+            if let uiImage = fetchedArtworkImage {
+                ArtworkZoomView(image: uiImage, onDismiss: { showArtworkZoom = false })
+            }
+        }
         .confirmationDialog("Are you sure you want to delete?", isPresented: $showDeleteConfirmation, titleVisibility: .visible) {
             Button("Delete", role: .destructive) {
                 Task {
@@ -212,17 +221,19 @@ struct ArtworkDetailView: View {
             }
         }
         .task(id: artwork.id) {
-            // Load the image from artwork.imageData (which already contains the correct image
-            // - either the fetched original painting if it matched, or the captured image if it didn't)
-            if let imageData = artwork.imageData, let image = UIImage(data: imageData) {
+            // Hero/thumbnail: always use user's captured photo
+            if let capturedData = artwork.capturedImageData, let image = UIImage(data: capturedData) {
                 displayImage = image.fixedOrientation()
-                print("✅ Loaded image from artwork.imageData for: \(artwork.title)")
-            } else if let capturedData = artwork.capturedImageData, let image = UIImage(data: capturedData) {
-                // Fallback to captured image if imageData is not available
+            } else if let imageData = artwork.imageData, let image = UIImage(data: imageData) {
                 displayImage = image.fixedOrientation()
-                print("✅ Loaded captured image as fallback for: \(artwork.title)")
             } else {
-                print("⚠️ No image data available for: \(artwork.title)")
+                displayImage = nil
+            }
+            // Artwork image for content section (fetched original when available)
+            if let artworkData = artwork.artworkImageData, let image = UIImage(data: artworkData) {
+                fetchedArtworkImage = image.fixedOrientation()
+            } else {
+                fetchedArtworkImage = nil
             }
         }
     }
@@ -287,6 +298,54 @@ struct ArtworkDetailView: View {
         .frame(maxWidth: .infinity)
     }
     
+    // MARK: - About Description with Artwork
+    
+    private var aboutDescriptionWithArtwork: some View {
+        let paragraphs = artwork.description.components(separatedBy: "\n\n")
+        let firstParagraph = paragraphs.first ?? artwork.description
+        let restParagraphs = paragraphs.count > 1 ? paragraphs.dropFirst().joined(separator: "\n\n") : ""
+        
+        return VStack(alignment: .leading, spacing: 16) {
+            Text(firstParagraph)
+                .font(.system(.title3))
+                .foregroundColor(colorScheme == .dark ? Color.white.opacity(0.7) : Color.black.opacity(0.7))
+                .lineSpacing(6)
+            
+            // Show artwork at end of first paragraph when we have the fetched original
+            if let uiImage = fetchedArtworkImage {
+                Button {
+                    showArtworkZoom = true
+                } label: {
+                    Image(uiImage: uiImage)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(maxWidth: .infinity)
+                        .cornerRadius(12)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(colorScheme == .dark ? Color.white.opacity(0.2) : Color.black.opacity(0.1), lineWidth: 1)
+                        )
+                        .overlay(alignment: .topTrailing) {
+                            Image(systemName: "arrow.up.left.and.arrow.down.right")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(.white)
+                                .padding(8)
+                                .background(.ultraThinMaterial, in: Circle())
+                                .padding(12)
+                        }
+                }
+                .buttonStyle(.plain)
+            }
+            
+            if !restParagraphs.isEmpty {
+                Text(restParagraphs)
+                    .font(.system(.title3))
+                    .foregroundColor(colorScheme == .dark ? Color.white.opacity(0.7) : Color.black.opacity(0.7))
+                    .lineSpacing(6)
+            }
+        }
+    }
+    
     // MARK: - Metadata Section
     
     private var metadataSection: some View {
@@ -318,6 +377,81 @@ struct ArtworkDetailView: View {
             }
             
             Spacer()
+        }
+    }
+}
+
+// MARK: - Artwork Zoom View
+
+struct ArtworkZoomView: View {
+    let image: UIImage
+    let onDismiss: () -> Void
+    @State private var scale: CGFloat = 1.0
+    @State private var lastScale: CGFloat = 1.0
+    @State private var offset: CGSize = .zero
+    @State private var lastOffset: CGSize = .zero
+    
+    var body: some View {
+        ZStack {
+            Color.black.ignoresSafeArea()
+            
+            Image(uiImage: image)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .scaleEffect(scale)
+                .offset(offset)
+                .gesture(
+                    MagnificationGesture()
+                        .onChanged { value in
+                            scale = lastScale * value
+                        }
+                        .onEnded { _ in
+                            lastScale = scale
+                            if scale < 1 { withAnimation { scale = 1; lastScale = 1 } }
+                            if scale > 4 { scale = 4; lastScale = 4 }
+                        }
+                )
+                .simultaneousGesture(
+                    DragGesture()
+                        .onChanged { value in
+                            offset = CGSize(
+                                width: lastOffset.width + value.translation.width,
+                                height: lastOffset.height + value.translation.height
+                            )
+                        }
+                        .onEnded { _ in
+                            lastOffset = offset
+                        }
+                )
+            
+            VStack {
+                HStack {
+                    Spacer()
+                    Button {
+                        onDismiss()
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 32))
+                            .foregroundStyle(.white.opacity(0.9))
+                            .symbolRenderingMode(.hierarchical)
+                    }
+                    .padding(24)
+                }
+                Spacer()
+            }
+        }
+        .onTapGesture(count: 2) {
+            withAnimation {
+                if scale > 1 {
+                    scale = 1
+                    lastScale = 1
+                    offset = .zero
+                    lastOffset = .zero
+                } else {
+                    scale = 2
+                    lastScale = 2
+                }
+            }
         }
     }
 }

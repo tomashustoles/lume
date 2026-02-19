@@ -51,6 +51,7 @@ struct LumeApp: App {
                         .zIndex(1)
                 }
             }
+            .statusBar(hidden: true)
             .animation(.easeOut(duration: 0.5), value: isShowingSplash)
         }
         .onChange(of: scenePhase) { oldPhase, newPhase in

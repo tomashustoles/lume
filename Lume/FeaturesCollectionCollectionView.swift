@@ -15,10 +15,18 @@ struct IdentifiableUUID: Identifiable {
 struct CollectionView: View {
     @Environment(\.colorScheme) private var colorScheme
     @EnvironmentObject var historyManager: HistoryManager
+    let onNavigateToCollection: (() -> Void)?
+    let onNavigateToScan: (() -> Void)?
+    
     @State private var searchText = ""
     @State private var showFavoritesOnly = false
     @State private var selectedArtworkWrapper: IdentifiableUUID?
     @State private var artworkToDelete: Artwork?
+    
+    init(onNavigateToCollection: (() -> Void)? = nil, onNavigateToScan: (() -> Void)? = nil) {
+        self.onNavigateToCollection = onNavigateToCollection
+        self.onNavigateToScan = onNavigateToScan
+    }
     
     private var filteredArtworks: [Artwork] {
         let artworks = showFavoritesOnly ? historyManager.favorites : historyManager.artworks
@@ -90,9 +98,12 @@ struct CollectionView: View {
                 
                 if let artwork = artwork {
                     let _ = print("✅ CollectionView sheet - Found artwork: '\(artwork.title)' by '\(artwork.artist)', has imageData: \(artwork.imageData != nil), description length: \(artwork.description.count)")
-                    ArtworkDetailView(artwork: artwork) {
-                        selectedArtworkWrapper = nil
-                    }
+                    ArtworkDetailView(
+                        artwork: artwork,
+                        onDismiss: { selectedArtworkWrapper = nil },
+                        onNavigateToCollection: onNavigateToCollection,
+                        onNavigateToScan: onNavigateToScan
+                    )
                     .environmentObject(historyManager)
                 } else {
                     let _ = print("❌ CollectionView sheet - Artwork not found for ID: \(artworkID.uuidString)")
@@ -163,6 +174,7 @@ struct CollectionView: View {
 }
 
 // MARK: - Swipeable Artwork Row
+// Uses horizontal ScrollView so vertical List scroll works (horizontal scroll only captures horizontal swipes)
 
 private struct SwipeableArtworkRow: View {
     let artwork: Artwork
@@ -171,68 +183,46 @@ private struct SwipeableArtworkRow: View {
     let onDelete: () -> Void
     let onToggleFavorite: () -> Void
     
-    @State private var offset: CGFloat = 0
-    // Full reveal: 44 (heart) + 12 (spacing) + 44 (trash) + 20 (padding) = 120; add buffer for iPad
     private let swipeRevealWidth: CGFloat = 136
     
     var body: some View {
         GeometryReader { geometry in
-            ZStack(alignment: .trailing) {
-                // Action buttons (revealed on swipe) - styled exactly like header and sheet
-                HStack(spacing: 12) {
-                    Button(action: onToggleFavorite) {
-                        Image(systemName: artwork.isFavorite ? "heart.fill" : "heart")
-                            .font(.system(size: 24))
-                            .foregroundStyle(artwork.isFavorite ? .red : (colorScheme == .dark ? .white : .black))
-                            .symbolRenderingMode(.hierarchical)
-                    }
-                    .buttonStyle(.plain)
-                    .frame(width: 44, height: 44)
-                    .background(.ultraThinMaterial, in: Circle())
-                    
-                    Button(action: onDelete) {
-                        Image(systemName: "trash")
-                            .font(.system(size: 24))
-                            .foregroundStyle(.white)
-                            .symbolRenderingMode(.hierarchical)
-                    }
-                    .buttonStyle(.plain)
-                    .frame(width: 44, height: 44)
-                    .background(Color.red, in: Circle())
-                }
-                .padding(.trailing, 20)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
-                .background(colorScheme == .dark ? Color.black : Color.white)
-                
-                // Row content
-                ArtworkRow(artwork: artwork, colorScheme: colorScheme)
-                    .background(colorScheme == .dark ? Color.black : Color.white)
-                    .contentShape(Rectangle())
-                    .offset(x: min(0, offset))
-                    .gesture(
-                        DragGesture()
-                            .onChanged { value in
-                                if value.translation.width < 0 {
-                                    offset = value.translation.width
-                                }
-                            }
-                            .onEnded { value in
-                                withAnimation(.easeOut(duration: 0.2)) {
-                                    if value.translation.width < -60 || value.predictedEndTranslation.width < -100 {
-                                        offset = -swipeRevealWidth
-                                    } else {
-                                        offset = 0
-                                    }
-                                }
-                            }
-                    )
-                    .onTapGesture {
-                        if offset < -20 {
-                            withAnimation(.easeOut(duration: 0.2)) { offset = 0 }
-                        } else {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 0) {
+                    // Row content (tappable)
+                    ArtworkRow(artwork: artwork, colorScheme: colorScheme)
+                        .frame(width: geometry.size.width)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
                             onTap()
                         }
+                    
+                    // Action buttons (revealed on swipe)
+                    HStack(spacing: 12) {
+                        Button(action: onToggleFavorite) {
+                            Image(systemName: artwork.isFavorite ? "heart.fill" : "heart")
+                                .font(.system(size: 24))
+                                .foregroundStyle(artwork.isFavorite ? .red : (colorScheme == .dark ? .white : .black))
+                                .symbolRenderingMode(.hierarchical)
+                        }
+                        .buttonStyle(.plain)
+                        .frame(width: 44, height: 44)
+                        .background(.ultraThinMaterial, in: Circle())
+                        
+                        Button(action: onDelete) {
+                            Image(systemName: "trash")
+                                .font(.system(size: 24))
+                                .foregroundStyle(.white)
+                                .symbolRenderingMode(.hierarchical)
+                        }
+                        .buttonStyle(.plain)
+                        .frame(width: 44, height: 44)
+                        .background(Color.red, in: Circle())
                     }
+                    .padding(.trailing, 20)
+                    .frame(width: swipeRevealWidth, height: 104)
+                    .background(colorScheme == .dark ? Color.black : Color.white)
+                }
             }
         }
         .frame(height: 104)
@@ -247,8 +237,8 @@ struct ArtworkRow: View {
     
     var body: some View {
         HStack(alignment: .top, spacing: 16) {
-            // Thumbnail
-            if let imageData = artwork.imageData,
+            // Thumbnail - always use user's captured photo
+            if let imageData = artwork.capturedImageData ?? artwork.imageData,
                let uiImage = UIImage(data: imageData) {
                 ZStack {
                     Image(uiImage: uiImage.fixedOrientation())

@@ -12,14 +12,14 @@ import Combine
 
 @MainActor
 class ScanLimitManager: ObservableObject {
-    @Published var scansRemaining: Int = 300 // TESTING: Changed from 3 to 300
+    @Published var scansRemaining: Int = 3
     @Published var lastResetDate: Date = Date()
     @Published var showLimitReached = false
     
     // CloudKit disabled for now to avoid crashes
     private var container: CKContainer? = nil
     
-    private let freeScanLimit = 300 // TESTING: Changed from 3 to 300
+    private let freeScanLimit = 3
     private var cloudKitAvailable = false
     
     // MARK: - UserDefaults Keys

@@ -80,34 +80,28 @@ class ScanViewModel: ObservableObject {
             // Stop animation on final frame
             stopFrameAnimation()
             
-            // Always save the captured image
+            // Always save the captured image for thumbnail and hero
             let capturedImageData = image.jpegData(compressionQuality: 0.8)
             
-            // Fetch the original painting image from Wikipedia/Wikimedia
-            var finalImageData = capturedImageData // Default to captured photo as fallback
+            // Optionally fetch the original artwork image for display in content (not for thumbnail/hero)
+            var artworkImageData: Data? = nil
             print("🖼️ Fetching original artwork image for: '\(result.title)' by '\(result.artist)'")
             do {
                 if let fetchedImage = try await geminiService.fetchArtworkImage(
                     title: result.title,
                     artist: result.artist
                 ) {
-                    // Use the fetched original - museum photos won't match pixel-wise with reproductions,
-                    // so we trust the fetch when we find an image for the recognized title+artist
-                    print("✅ Found original artwork image - using it for: \(result.title)")
+                    print("✅ Found original artwork image - will show in content for: \(result.title)")
                     let fixedFetchedImage = fetchedImage.fixedOrientation()
-                    finalImageData = fixedFetchedImage.jpegData(compressionQuality: 0.8)
+                    artworkImageData = fixedFetchedImage.jpegData(compressionQuality: 0.8)
                 } else {
-                    // No image found online - use captured photo
-                    print("⚠️ Could not find artwork image online - using captured photo for: \(result.title)")
-                    finalImageData = capturedImageData
+                    print("⚠️ Could not find artwork image online for: \(result.title)")
                 }
             } catch {
-                // Fetch failed - use captured photo as fallback
-                print("❌ Error fetching artwork image: \(error.localizedDescription) - using captured photo for: \(result.title)")
-                finalImageData = capturedImageData
+                print("❌ Error fetching artwork image: \(error.localizedDescription) for: \(result.title)")
             }
             
-            // Create artwork
+            // Create artwork - always use captured photo for thumbnail and hero
             let artwork = Artwork(
                 title: result.title,
                 artist: result.artist,
@@ -118,8 +112,9 @@ class ScanViewModel: ObservableObject {
                 culturalContext: result.culturalContext,
                 estimatedPeriod: result.estimatedPeriod,
                 frameStyle: frameStyle,
-                imageData: finalImageData,
-                capturedImageData: capturedImageData
+                imageData: capturedImageData,
+                capturedImageData: capturedImageData,
+                artworkImageData: artworkImageData
             )
             
             recognizedArtwork = artwork

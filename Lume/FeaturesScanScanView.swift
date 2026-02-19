@@ -23,9 +23,11 @@ struct ScanView: View {
     @State private var selectedPhotoItem: PhotosPickerItem?
     
     let onNavigateToCollection: (() -> Void)?
+    let onNavigateToScan: (() -> Void)?
     
-    init(onNavigateToCollection: (() -> Void)? = nil) {
+    init(onNavigateToCollection: (() -> Void)? = nil, onNavigateToScan: (() -> Void)? = nil) {
         self.onNavigateToCollection = onNavigateToCollection
+        self.onNavigateToScan = onNavigateToScan
     }
     
     var body: some View {
@@ -107,7 +109,8 @@ struct ScanView: View {
                         frozenImage = nil
                         viewModel.reset()
                     },
-                    onNavigateToCollection: onNavigateToCollection
+                    onNavigateToCollection: onNavigateToCollection,
+                    onNavigateToScan: onNavigateToScan
                 )
             }
         }

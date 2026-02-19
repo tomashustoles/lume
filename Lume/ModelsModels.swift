@@ -21,8 +21,9 @@ struct Artwork: Identifiable, Codable, Hashable {
     let culturalContext: String
     let estimatedPeriod: String
     let frameStyle: FrameStyle
-    let imageData: Data?           // Real artwork image (from Wikimedia, etc.)
-    let capturedImageData: Data?   // Photo taken by the user
+    let imageData: Data?           // User's captured photo (thumbnail/hero)
+    let capturedImageData: Data?   // Photo taken by the user (same as imageData, kept for compatibility)
+    let artworkImageData: Data?    // Fetched original artwork image (shown in content when available)
     let timestamp: Date
     var isFavorite: Bool
     
@@ -39,6 +40,7 @@ struct Artwork: Identifiable, Codable, Hashable {
         frameStyle: FrameStyle,
         imageData: Data? = nil,
         capturedImageData: Data? = nil,
+        artworkImageData: Data? = nil,
         timestamp: Date = Date(),
         isFavorite: Bool = false
     ) {
@@ -54,6 +56,7 @@ struct Artwork: Identifiable, Codable, Hashable {
         self.frameStyle = frameStyle
         self.imageData = imageData
         self.capturedImageData = capturedImageData
+        self.artworkImageData = artworkImageData
         self.timestamp = timestamp
         self.isFavorite = isFavorite
     }

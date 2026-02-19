@@ -13,23 +13,27 @@ struct MainTabView: View {
     
     var body: some View {
         TabView(selection: $selectedTab) {
-            ScanView(onNavigateToCollection: {
-                selectedTab = 1 // Switch to Collection tab
-            })
+            ScanView(
+                onNavigateToCollection: { selectedTab = 1 },
+                onNavigateToScan: { selectedTab = 0 }
+            )
                 .tabItem {
-                    Label("Scan", systemImage: "camera")
+                    Label("Scan", systemImage: selectedTab == 0 ? "camera.fill" : "camera")
                 }
                 .tag(0)
             
-            CollectionView()
+            CollectionView(
+                onNavigateToCollection: { selectedTab = 1 },
+                onNavigateToScan: { selectedTab = 0 }
+            )
                 .tabItem {
-                    Label("Collection", systemImage: "square.stack.3d.up")
+                    Label("Collection", systemImage: selectedTab == 1 ? "square.stack.3d.up.fill" : "square.stack.3d.up")
                 }
                 .tag(1)
             
             ProfileView()
                 .tabItem {
-                    Label("Profile", systemImage: "person")
+                    Label("Profile", systemImage: selectedTab == 2 ? "person.fill" : "person")
                 }
                 .tag(2)
         }

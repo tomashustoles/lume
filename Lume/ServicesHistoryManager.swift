@@ -41,7 +41,7 @@ class HistoryManager: ObservableObject {
         // Check if we have artworks with image data still in memory (from old storage)
         // If so, save them to files and update UserDefaults
         let needsMigration = artworks.contains { artwork in
-            artwork.imageData != nil || artwork.capturedImageData != nil
+            artwork.imageData != nil || artwork.capturedImageData != nil || artwork.artworkImageData != nil
         }
         
         if needsMigration {
@@ -87,8 +87,10 @@ class HistoryManager: ObservableObject {
         // Delete associated image files
         let imageURL = imageFileURL(for: artwork.id)
         let capturedImageURL = capturedImageFileURL(for: artwork.id)
+        let artworkImageURL = artworkImageFileURL(for: artwork.id)
         try? FileManager.default.removeItem(at: imageURL)
         try? FileManager.default.removeItem(at: capturedImageURL)
+        try? FileManager.default.removeItem(at: artworkImageURL)
         
         saveLocalData()
         await deleteFromCloud(artwork)
@@ -133,6 +135,7 @@ class HistoryManager: ObservableObject {
                 // Load image data from files
                 var imageData: Data? = nil
                 var capturedImageData: Data? = nil
+                var artworkImageData: Data? = nil
                 
                 let imageURL = imageFileURL(for: artworkMetadata.id)
                 if FileManager.default.fileExists(atPath: imageURL.path),
@@ -144,6 +147,12 @@ class HistoryManager: ObservableObject {
                 if FileManager.default.fileExists(atPath: capturedImageURL.path),
                    let data = try? Data(contentsOf: capturedImageURL) {
                     capturedImageData = data
+                }
+                
+                let artworkImgURL = artworkImageFileURL(for: artworkMetadata.id)
+                if FileManager.default.fileExists(atPath: artworkImgURL.path),
+                   let data = try? Data(contentsOf: artworkImgURL) {
+                    artworkImageData = data
                 }
                 
                 // Reconstruct artwork with image data
@@ -159,7 +168,8 @@ class HistoryManager: ObservableObject {
                     estimatedPeriod: artworkMetadata.estimatedPeriod,
                     frameStyle: artworkMetadata.frameStyle,
                     imageData: imageData,
-                    capturedImageData: capturedImageData,
+                    capturedImageData: capturedImageData ?? imageData,
+                    artworkImageData: artworkImageData,
                     timestamp: artworkMetadata.timestamp,
                     isFavorite: artworkMetadata.isFavorite
                 )
@@ -191,6 +201,10 @@ class HistoryManager: ObservableObject {
                     let capturedImageURL = capturedImageFileURL(for: artwork.id)
                     try? capturedImageData.write(to: capturedImageURL)
                 }
+                if let artworkImageData = artwork.artworkImageData {
+                    let artworkImageURL = artworkImageFileURL(for: artwork.id)
+                    try? artworkImageData.write(to: artworkImageURL)
+                }
                 
                 // Create a copy without image data for UserDefaults storage
                 let artworkForStorage = Artwork(
@@ -206,6 +220,7 @@ class HistoryManager: ObservableObject {
                     frameStyle: artwork.frameStyle,
                     imageData: nil, // Don't store in UserDefaults
                     capturedImageData: nil, // Don't store in UserDefaults
+                    artworkImageData: nil, // Don't store in UserDefaults
                     timestamp: artwork.timestamp,
                     isFavorite: artwork.isFavorite
                 )
@@ -229,6 +244,10 @@ class HistoryManager: ObservableObject {
     
     private func capturedImageFileURL(for artworkID: UUID) -> URL {
         return imagesDirectory.appendingPathComponent("\(artworkID.uuidString)_captured.jpg")
+    }
+    
+    private func artworkImageFileURL(for artworkID: UUID) -> URL {
+        return imagesDirectory.appendingPathComponent("\(artworkID.uuidString)_artwork.jpg")
     }
     
     // MARK: - CloudKit Sync
@@ -321,6 +340,11 @@ class HistoryManager: ObservableObject {
             try? imageData.write(to: tempURL)
             record["imageData"] = CKAsset(fileURL: tempURL)
         }
+        if let artworkImageData = artwork.artworkImageData {
+            let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID().uuidString)_artwork")
+            try? artworkImageData.write(to: tempURL)
+            record["artworkImageData"] = CKAsset(fileURL: tempURL)
+        }
         
         return record
     }
@@ -350,6 +374,12 @@ class HistoryManager: ObservableObject {
             imageData = try? Data(contentsOf: fileURL)
         }
         
+        var artworkImageData: Data?
+        if let asset = record["artworkImageData"] as? CKAsset,
+           let fileURL = asset.fileURL {
+            artworkImageData = try? Data(contentsOf: fileURL)
+        }
+        
         guard let idString = record.recordID.recordName.components(separatedBy: "/").last,
               let id = UUID(uuidString: idString) else {
             return nil
@@ -367,6 +397,8 @@ class HistoryManager: ObservableObject {
             estimatedPeriod: estimatedPeriod,
             frameStyle: frameStyle,
             imageData: imageData,
+            capturedImageData: imageData,
+            artworkImageData: artworkImageData,
             timestamp: timestamp,
             isFavorite: isFavorite
         )

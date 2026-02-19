@@ -58,8 +58,8 @@ struct ArtworkCard: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            // Image
-            if let imageData = artwork.imageData,
+            // Image - use user's captured photo
+            if let imageData = artwork.capturedImageData ?? artwork.imageData,
                let uiImage = UIImage(data: imageData) {
                 Image(uiImage: uiImage.fixedOrientation())
                     .resizable()

@@ -33,6 +33,13 @@ struct PaywallView: View {
                         ProgressView()
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 40)
+                    } else if subscriptionManager.subscriptionProducts.isEmpty {
+                        Text("Unable to load subscription options. Please check your connection and try again.")
+                            .font(.system(.subheadline))
+                            .foregroundColor(colorScheme == .dark ? Color.white.opacity(0.6) : Color.black.opacity(0.6))
+                            .multilineTextAlignment(.center)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 24)
                     } else {
                         productSelection
                     }
@@ -64,6 +71,10 @@ struct PaywallView: View {
         }
         .task {
             await subscriptionManager.loadProducts()
+            // Auto-select first product so subscribe button is enabled when products load
+            if selectedProduct == nil, let first = subscriptionManager.subscriptionProducts.first {
+                selectedProduct = first
+            }
         }
         .alert("Error", isPresented: $showError) {
             Button("OK") {}
@@ -216,7 +227,7 @@ struct PaywallView: View {
                 dismiss()
             }
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
             showError = true
         }
     }
