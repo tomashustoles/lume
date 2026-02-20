@@ -36,6 +36,7 @@
 		35BC2C642F2B97D100774EBA /* API_SECURITY_SUMMARY.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = API_SECURITY_SUMMARY.md; sourceTree = "<group>"; };
 		35BC2C662F2B97E300774EBA /* setup_api_key.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = setup_api_key.sh; sourceTree = "<group>"; };
 		35BC2C782F2C05FD00774EBA /* Products.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = Products.storekit; sourceTree = "<group>"; };
+		35BC2C8A2F2C200000774EBA /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
 		35C60A252F2C099E002C86C0 /* Lume.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Lume.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		35C60AA52F2E00CB002C86C0 /* UIImage+FixOrientation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIImage+FixOrientation.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -117,6 +118,7 @@
 				35C60A3E2F2C09A0002C86C0 /* LumeUITests */,
 				35BC2BE72F2994B600774EBA /* Products */,
 				35BC2C562F2B973800774EBA /* .gitignore */,
+				35BC2C8A2F2C200000774EBA /* Config.xcconfig */,
 				35BC2C582F2B974000774EBA /* Secrets.xcconfig.template */,
 				35BC2C5A2F2B974400774EBA /* Secrets.xcconfig */,
 				35BC2C5C2F2B975700774EBA /* README_API_SETUP.md */,
@@ -312,6 +314,7 @@
 /* Begin XCBuildConfiguration section */
 		35BC2C052F2994B700774EBA /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 35BC2C8A2F2C200000774EBA /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -363,7 +366,6 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				GEMINI_API_KEY = "AIzaSyD4Yc8DhfKOc8pECpyynzjFg5TTj-9LtrU";
 				INFOPLIST_FILE = Lume/Info.plist;
 				INFOPLIST_KEY_GEMINI_API_KEY = "$(GEMINI_API_KEY)";
 				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
@@ -380,6 +382,7 @@
 		};
 		35BC2C062F2994B700774EBA /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 35BC2C8A2F2C200000774EBA /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -425,7 +428,6 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				GEMINI_API_KEY = "AIzaSyD4Yc8DhfKOc8pECpyynzjFg5TTj-9LtrU";
 				INFOPLIST_FILE = Lume/Info.plist;
 				INFOPLIST_KEY_GEMINI_API_KEY = "$(GEMINI_API_KEY)";
 				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
@@ -525,6 +527,7 @@
 		};
 		35C60A432F2C09A0002C86C0 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 35BC2C8A2F2C200000774EBA /* Config.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -532,11 +535,10 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = N38VM65LJJ;
 				ENABLE_PREVIEWS = YES;
-				GEMINI_API_KEY = "AIzaSyD4Yc8DhfKOc8pECpyynzjFg5TTj-9LtrU";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Lume/Info.plist;
-				INFOPLIST_KEY_GEMINI_API_KEY = "$(GEMINI_API_KEY)";
 				INFOPLIST_KEY_CFBundleDisplayName = "Mona - Art Companion";
+				INFOPLIST_KEY_GEMINI_API_KEY = "$(GEMINI_API_KEY)";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Mona needs camera access to scan and identify artworks.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "This app needs photo library access to save scanned artworks.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -563,6 +565,7 @@
 		};
 		35C60A442F2C09A0002C86C0 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 35BC2C8A2F2C200000774EBA /* Config.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -570,11 +573,10 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = N38VM65LJJ;
 				ENABLE_PREVIEWS = YES;
-				GEMINI_API_KEY = "AIzaSyD4Yc8DhfKOc8pECpyynzjFg5TTj-9LtrU";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Lume/Info.plist;
-				INFOPLIST_KEY_GEMINI_API_KEY = "$(GEMINI_API_KEY)";
 				INFOPLIST_KEY_CFBundleDisplayName = "Mona - Art Companion";
+				INFOPLIST_KEY_GEMINI_API_KEY = "$(GEMINI_API_KEY)";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Mona needs camera access to scan and identify artworks.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "This app needs photo library access to save scanned artworks.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;

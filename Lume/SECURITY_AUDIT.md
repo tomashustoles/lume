@@ -52,7 +52,7 @@ All API keys have been removed from source code and replaced with secure placeho
 Run this command to verify no keys are in source files:
 
 ```bash
-grep -r "AIzaSyD4Yc8DhfKOc8pECpyynzjFg5TTj-9LtrU" . --exclude-dir=.git --exclude-dir=DerivedData
+grep -r "AIzaSy" . --exclude-dir=.git --exclude-dir=DerivedData
 ```
 
 **Expected result**: No matches (or only in `.gitignore` files)

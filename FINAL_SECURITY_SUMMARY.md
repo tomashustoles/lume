@@ -88,7 +88,7 @@ If your repository is **private** and you trust all collaborators:
 2. **Test the build** to ensure it still works
 3. **Verify no keys in git**:
    ```bash
-   grep -r "AIzaSyD4Yc8DhfKOc8pECpyynzjFg5TTj-9LtrU" . --exclude-dir=.git
+   grep -r "AIzaSy" . --exclude-dir=.git
    ```
 4. **Commit and push** when ready
 

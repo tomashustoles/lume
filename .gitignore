@@ -92,9 +92,10 @@ iOSInjectionProject/
 # IMPORTANT: API Keys and Secrets
 # Never commit these files!
 Secrets.xcconfig
-Config.xcconfig
 **/Secrets.xcconfig
-**/Config.xcconfig
+# Config.xcconfig is safe to commit (includes Config.local.xcconfig which is gitignored)
+# Config.local.xcconfig - never commit (contains API key)
+**/Config.local.xcconfig
 APIKeys.plist
 Secrets.plist
 **/APIKeys.plist

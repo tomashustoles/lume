@@ -82,7 +82,7 @@ Before pushing to GitHub, run:
 
 ```bash
 # Check for API keys in source files (should return empty)
-grep -r "AIzaSyD4Yc8DhfKOc8pECpyynzjFg5TTj-9LtrU" . \
+grep -r "AIzaSy" . \
   --exclude-dir=.git \
   --exclude-dir=DerivedData \
   --exclude-dir=.build \
