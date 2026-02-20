@@ -82,6 +82,9 @@ enum AppConfig {
         return "https://example.com/privacy" // Replace in Info.plist - required for App Review
     }
     
+    /// Support email for user contact
+    static let supportEmail = "me@tomashustoles.cz"
+    
     /// Terms of Service URL - set TERMS_OF_SERVICE_URL in Info.plist before App Store submission
     static var termsOfServiceURL: String {
         if let url = Bundle.main.object(forInfoDictionaryKey: "TERMS_OF_SERVICE_URL") as? String, !url.isEmpty {

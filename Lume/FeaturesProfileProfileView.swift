@@ -137,6 +137,9 @@ struct ProfileView: View {
                     Link("Terms of Service", destination: URL(string: AppConfig.termsOfServiceURL)!)
                         .foregroundColor(colorScheme == .dark ? .white : .black)
                     
+                    Link("Contact Support", destination: URL(string: "mailto:\(AppConfig.supportEmail)")!)
+                        .foregroundColor(colorScheme == .dark ? .white : .black)
+                    
                     HStack {
                         Text("Version")
                         Spacer()

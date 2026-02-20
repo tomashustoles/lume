@@ -533,7 +533,7 @@ enum AnalyticsEvent {
 
 1. **In-App Feedback**
    - Add feedback form in profile
-   - Email to support@museumcompanion.com
+   - Email to me@tomashustoles.cz
 
 2. **FAQ**
    - Common issues and solutions
@@ -659,9 +659,7 @@ If critical bug in production:
 ### Contact
 
 For questions about this project:
-- **Technical**: dev@museumcompanion.com
-- **Support**: support@museumcompanion.com
-- **Business**: hello@museumcompanion.com
+- **Contact**: me@tomashustoles.cz
 
 ---
 

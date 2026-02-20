@@ -84,11 +84,6 @@ struct ScanView: View {
                     scanCounter
                 }
                 
-                // Scan limit overlay - blocks scanning when 0 scans left
-                if !subscriptionManager.isProUser && scanLimitManager.scansRemaining == 0 {
-                    scanLimitOverlay
-                }
-                
             } else {
                 // Permission required view
                 permissionView
@@ -96,6 +91,12 @@ struct ScanView: View {
         }
         .task {
             await viewModel.checkCameraPermission()
+        }
+        .onAppear {
+            // Show Unlock Unlimited Art sheet when user has 0 scans (same as Profile > Upgrade to Pro)
+            if !subscriptionManager.isProUser && scanLimitManager.scansRemaining == 0 {
+                viewModel.showPaywall = true
+            }
         }
         .onChange(of: selectedPhotoItem) { oldValue, newValue in
             Task {
@@ -135,59 +136,6 @@ struct ScanView: View {
         } message: {
             Text(viewModel.errorMessage ?? "An unknown error occurred.")
         }
-    }
-    
-    // MARK: - Scan Limit Overlay
-    
-    private var scanLimitOverlay: some View {
-        VStack(spacing: 0) {
-            Spacer()
-            
-            VStack(spacing: 24) {
-                Image(systemName: "sparkles")
-                    .font(.system(size: 44))
-                    .foregroundColor(.white)
-                
-                VStack(spacing: 8) {
-                    Text("Scan Limit Reached")
-                        .font(.custom("NewYork", size: 28))
-                        .fontWeight(.semibold)
-                        .foregroundColor(.white)
-                    
-                    Text("You've used all 3 daily scans. Upgrade to Pro for unlimited scanning.")
-                        .font(.system(.body))
-                        .foregroundColor(.white.opacity(0.9))
-                        .multilineTextAlignment(.center)
-                }
-                
-                Button {
-                    viewModel.showPaywall = true
-                } label: {
-                    HStack(spacing: 8) {
-                        Text("Upgrade to Pro")
-                            .font(.system(.body, design: .default))
-                            .fontWeight(.semibold)
-                        Image(systemName: "sparkles")
-                            .font(.system(size: 14, weight: .semibold))
-                    }
-                    .foregroundColor(.black)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(Color.white)
-                    .cornerRadius(12)
-                }
-                .padding(.horizontal, 24)
-            }
-            .padding(28)
-            .glassEffect(.regular, in: .rect(cornerRadius: 24))
-            .padding(.horizontal, 20)
-            .padding(.bottom, 120)
-            
-            Spacer()
-        }
-        .background(Color.black.opacity(0.4))
-        .ignoresSafeArea()
-        .allowsHitTesting(true)
     }
     
     // MARK: - Scan Area Overlay
@@ -237,7 +185,9 @@ struct ScanView: View {
             
             Button {
                 print("🔵 Capture button tapped")
-                if let controller = findCameraViewController() {
+                if !subscriptionManager.isProUser && scanLimitManager.scansRemaining == 0 {
+                    viewModel.showPaywall = true
+                } else if let controller = findCameraViewController() {
                     print("✅ Found CameraViewController")
                     controller.capturePhoto()
                 } else {
@@ -252,8 +202,8 @@ struct ScanView: View {
                 .frame(width: 80, height: 80)
                 .glassEffect(.regular.interactive(), in: .circle)
             }
-            .disabled(viewModel.isProcessing || isAnalyzing || (!subscriptionManager.isProUser && scanLimitManager.scansRemaining == 0))
-            .opacity((viewModel.isProcessing || isAnalyzing || (!subscriptionManager.isProUser && scanLimitManager.scansRemaining == 0)) ? 0.5 : 1.0)
+            .disabled(viewModel.isProcessing || isAnalyzing)
+            .opacity((viewModel.isProcessing || isAnalyzing) ? 0.5 : 1.0)
             .position(x: geometry.size.width / 2, y: buttonYPosition)
         }
     }
@@ -284,8 +234,8 @@ struct ScanView: View {
                 .frame(width: 50, height: 50)
                 .glassEffect(.regular.interactive(), in: .circle)
             }
-            .disabled(viewModel.isProcessing || isAnalyzing || (!subscriptionManager.isProUser && scanLimitManager.scansRemaining == 0))
-            .opacity((viewModel.isProcessing || isAnalyzing || (!subscriptionManager.isProUser && scanLimitManager.scansRemaining == 0)) ? 0.5 : 1.0)
+            .disabled(viewModel.isProcessing || isAnalyzing)
+            .opacity((viewModel.isProcessing || isAnalyzing) ? 0.5 : 1.0)
             .position(x: safeXPosition, y: buttonYPosition)
         }
     }
@@ -435,6 +385,13 @@ struct ScanView: View {
     }
     
     private func loadAndProcessPhoto(from item: PhotosPickerItem) async {
+        // Show paywall if user has 0 scans (same as Profile > Upgrade to Pro)
+        if !subscriptionManager.isProUser && scanLimitManager.scansRemaining == 0 {
+            viewModel.showPaywall = true
+            selectedPhotoItem = nil
+            return
+        }
+        
         guard let imageData = try? await item.loadTransferable(type: Data.self),
               let image = UIImage(data: imageData) else {
             return

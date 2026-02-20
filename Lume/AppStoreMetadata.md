@@ -174,11 +174,11 @@ Similar compositions adapted for larger screens with more breathing room.
 
 ## Support Information
 
-**Support URL**: https://museumcompanion.com/support
+**Support URL**: https://tomashustoles.github.io/lume-privacy-policy/support.html
 
-**Marketing URL**: https://museumcompanion.com
+**Marketing URL**: https://tomashustoles.github.io/lume-privacy-policy/
 
-**Support Email**: support@museumcompanion.com
+**Support Email**: me@tomashustoles.cz
 
 ## Review Notes
 
@@ -221,7 +221,7 @@ Use the included Configuration.storekit file for testing subscriptions in sandbo
 **CLOUDKIT**
 The app uses CloudKit for syncing. It will work with any Apple ID signed into iCloud.
 
-If you have any questions, please contact support@museumcompanion.com
+If you have any questions, please contact me@tomashustoles.cz
 
 ## Localization
 
