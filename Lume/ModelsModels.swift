@@ -121,8 +121,8 @@ enum FrameStyle: String, Codable, CaseIterable {
 // MARK: - Subscription Product
 
 enum SubscriptionProduct: String, CaseIterable {
-    case monthly = "txh.lume.pro.monthly"
-    case yearly = "txh.lume.pro.yearly"
+    case monthly = "com.h.lumeapp.pro.monthly"
+    case yearly = "com.h.lumeapp.pro.yearly"
     
     var displayName: String {
         switch self {

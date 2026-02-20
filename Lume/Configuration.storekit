@@ -88,13 +88,13 @@
           "localizations" : [
             {
               "description" : "Unlimited artwork scanning and all Pro features",
-              "displayName" : "Art Companion Pro Monthly",
+              "displayName" : "Lume Pro Monthly",
               "locale" : "en_US"
             }
           ],
-          "productID" : "txh.lume.pro.monthly",
+          "productID" : "com.h.lumeapp.pro.monthly",
           "recurringSubscriptionPeriod" : "P1M",
-          "referenceName" : "Pro Monthly",
+          "referenceName" : "Lume Pro Monthly",
           "subscriptionGroupID" : "21234567",
           "type" : "RecurringSubscription"
         },
@@ -117,13 +117,13 @@
           "localizations" : [
             {
               "description" : "Unlimited artwork scanning and all Pro features. Save 44% compared to monthly.",
-              "displayName" : "Art Companion Pro Yearly",
+              "displayName" : "Lume Pro Yearly",
               "locale" : "en_US"
             }
           ],
-          "productID" : "txh.lume.pro.yearly",
+          "productID" : "com.h.lumeapp.pro.yearly",
           "recurringSubscriptionPeriod" : "P1Y",
-          "referenceName" : "Pro Yearly",
+          "referenceName" : "Lume Pro Yearly",
           "subscriptionGroupID" : "21234567",
           "type" : "RecurringSubscription"
         }
