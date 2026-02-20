@@ -1,6 +1,6 @@
 //
 //  ScanLimitManager.swift
-//  Museum Companion
+//  Mona - Art Companion
 //
 //  Manages daily scan limits with iCloud sync
 //  Protects against clock changes and ensures fair usage
@@ -122,6 +122,13 @@ class ScanLimitManager: ObservableObject {
         showLimitReached = false
     }
     
+    /// Call when subscription expires - resets from unlimited to free tier limit
+    func resetForFreeUserIfNeeded() {
+        guard scansRemaining == Int.max else { return }
+        scansRemaining = freeScanLimit
+        saveLocalData()
+    }
+    
     // MARK: - Check if User Can Scan
     
     func canScan(isProUser: Bool) async -> Bool {
@@ -189,9 +196,17 @@ class ScanLimitManager: ObservableObject {
     // MARK: - Local Persistence
     
     private func loadLocalData() {
-        // Load scan count
+        // Load scan count - cap at freeScanLimit to fix stale test data (e.g. 217 from testing with limit 300)
         let savedScans = UserDefaults.standard.integer(forKey: Keys.scansRemaining)
-        scansRemaining = savedScans > 0 ? savedScans : freeScanLimit
+        if savedScans == Int.max {
+            scansRemaining = Int.max  // Pro user - preserve unlimited
+        } else if savedScans > 0 && savedScans <= freeScanLimit {
+            scansRemaining = savedScans
+        } else {
+            // Stale test data or invalid value - cap to production limit and persist
+            scansRemaining = freeScanLimit
+            saveLocalData()
+        }
         
         // Load last reset date
         if let savedDate = UserDefaults.standard.object(forKey: Keys.lastResetDate) as? Date {

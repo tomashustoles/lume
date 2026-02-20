@@ -1,6 +1,6 @@
 //
 //  Models.swift
-//  Museum Companion
+//  Mona - Art Companion
 //
 //  Core data models for the app
 //
@@ -121,8 +121,8 @@ enum FrameStyle: String, Codable, CaseIterable {
 // MARK: - Subscription Product
 
 enum SubscriptionProduct: String, CaseIterable {
-    case monthly = "com.museumcompanion.pro.monthly"
-    case yearly = "com.museumcompanion.pro.yearly"
+    case monthly = "txh.lume.pro.monthly"
+    case yearly = "txh.lume.pro.yearly"
     
     var displayName: String {
         switch self {

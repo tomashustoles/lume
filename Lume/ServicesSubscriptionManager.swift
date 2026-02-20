@@ -1,6 +1,6 @@
 //
 //  SubscriptionManager.swift
-//  Museum Companion
+//  Mona - Art Companion
 //
 //  Manages StoreKit 2 subscriptions with comprehensive entitlement logic
 //
@@ -12,6 +12,7 @@ import Combine
 @MainActor
 class SubscriptionManager: ObservableObject {
     @Published private(set) var subscriptionProducts: [Product] = []
+    @Published private(set) var loadError: String?
     @Published private(set) var isProUser = false
     @Published private(set) var currentSubscription: Product.SubscriptionInfo.Status?
     @Published var isLoading = false
@@ -54,6 +55,7 @@ class SubscriptionManager: ObservableObject {
     
     func loadProducts() async {
         isLoading = true
+        loadError = nil
         defer { isLoading = false }
         
         do {
@@ -69,6 +71,7 @@ class SubscriptionManager: ObservableObject {
             
             print("✅ Loaded \(subscriptionProducts.count) subscription products")
         } catch {
+            loadError = error.localizedDescription
             print("❌ Failed to load products: \(error)")
         }
     }

@@ -1,6 +1,6 @@
 //
 //  ScanViewModel.swift
-//  Museum Companion
+//  Mona - Art Companion
 //
 //  ViewModel for camera scanning functionality
 //
@@ -20,6 +20,7 @@ class ScanViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var showError = false
     @Published var showLimitReached = false
+    @Published var showPaywall = false
     @Published var cameraPermissionGranted = false
     
     private let geminiService = GeminiService.shared
@@ -55,7 +56,7 @@ class ScanViewModel: ObservableObject {
         if !isProUser {
             let canScan = await scanLimitManager.useScan()
             if !canScan {
-                showLimitReached = true
+                showPaywall = true
                 return
             }
         }
@@ -185,6 +186,7 @@ class ScanViewModel: ObservableObject {
         isProcessing = false
         errorMessage = nil
         showError = false
+        showLimitReached = false
         currentFrame = .classicalGilded
         stopFrameAnimation()
     }

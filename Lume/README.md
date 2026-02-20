@@ -1,10 +1,10 @@
-# Museum Companion
+# Mona - Art Companion
 
 A premium iOS app that recognizes paintings via camera and explains them using Gemini API, combining factual identification with emotional storytelling.
 
 ## Overview
 
-Museum Companion transforms how people experience art. Point your camera at any painting, and instantly receive both factual information and emotional narratives that bring the artwork to life.
+Mona - Art Companion transforms how people experience art. Point your camera at any painting, and instantly receive both factual information and emotional narratives that bring the artwork to life.
 
 ## Features
 
@@ -81,7 +81,7 @@ Three-screen flow:
 ## Project Structure
 
 ```
-Museum Companion/
+Mona - Art Companion/
 ├── MuseumCompanionApp.swift       # App entry point
 ├── Models/
 │   └── Models.swift                # Data models
@@ -245,13 +245,13 @@ All views include SwiftUI previews:
 ## App Store Metadata
 
 ### Name
-Museum Companion
+Mona - Art Companion
 
 ### Subtitle
 AI-Powered Art Recognition
 
 ### Description
-Transform your museum visits with Museum Companion. Point your camera at any painting and instantly discover its story, artist, and cultural significance.
+Transform your art experience with Mona - Art Companion. Point your camera at any painting and instantly discover its story, artist, and cultural significance.
 
 **Features:**
 • Instant artwork recognition using advanced AI
@@ -297,11 +297,11 @@ Secondary: Reference
 
 ## Support
 
-For support, contact: support@museumcompanion.com
+For support, contact: me@tomashustoles.cz
 
 ## License
 
-Copyright © 2026 Museum Companion. All rights reserved.
+Copyright © 2026 Mona - Art Companion. All rights reserved.
 
 ## Credits
 

@@ -1,5 +1,5 @@
 {
-  "identifier" : "MuseumCompanionProducts",
+  "identifier" : "ArtCompanionProducts",
   "nonRenewingSubscriptions" : [
 
   ],
@@ -88,11 +88,11 @@
           "localizations" : [
             {
               "description" : "Unlimited artwork scanning and all Pro features",
-              "displayName" : "Museum Companion Pro Monthly",
+              "displayName" : "Art Companion Pro Monthly",
               "locale" : "en_US"
             }
           ],
-          "productID" : "com.museumcompanion.pro.monthly",
+          "productID" : "txh.lume.pro.monthly",
           "recurringSubscriptionPeriod" : "P1M",
           "referenceName" : "Pro Monthly",
           "subscriptionGroupID" : "21234567",
@@ -117,11 +117,11 @@
           "localizations" : [
             {
               "description" : "Unlimited artwork scanning and all Pro features. Save 44% compared to monthly.",
-              "displayName" : "Museum Companion Pro Yearly",
+              "displayName" : "Art Companion Pro Yearly",
               "locale" : "en_US"
             }
           ],
-          "productID" : "com.museumcompanion.pro.yearly",
+          "productID" : "txh.lume.pro.yearly",
           "recurringSubscriptionPeriod" : "P1Y",
           "referenceName" : "Pro Yearly",
           "subscriptionGroupID" : "21234567",

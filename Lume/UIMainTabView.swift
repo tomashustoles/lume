@@ -1,6 +1,6 @@
 //
 //  MainTabView.swift
-//  Museum Companion
+//  Mona - Art Companion
 //
 //  Main tab bar navigation
 //

@@ -1,6 +1,6 @@
 //
 //  UIImage+Similarity.swift
-//  Lume
+//  Mona - Art Companion
 //
 //  Extension to compare images for visual similarity
 //

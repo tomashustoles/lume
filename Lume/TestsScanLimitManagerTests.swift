@@ -1,6 +1,6 @@
 //
 //  ScanLimitManagerTests.swift
-//  Museum Companion Tests
+//  Mona - Art Companion Tests
 //
 //  Unit tests for ScanLimitManager
 //

@@ -1,6 +1,6 @@
 //
 //  GeminiService.swift
-//  Museum Companion
+//  Mona - Art Companion
 //
 //  Service for communicating with Gemini API
 //

@@ -1,6 +1,6 @@
 //
 //  CameraView.swift
-//  Museum Companion
+//  Mona - Art Companion
 //
 //  SwiftUI wrapper for camera with UIKit integration
 //

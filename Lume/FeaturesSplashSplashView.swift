@@ -1,7 +1,7 @@
 //
 //
 //  SplashView.swift
-//  Lume
+//  Mona - Art Companion
 //
 //  Simple splash screen that shows on every launch
 //

@@ -1,6 +1,6 @@
 //
 //  ContentView.swift
-//  Lume
+//  Mona - Art Companion
 //
 //  Created by Tomas Hustoles on 29/1/26.
 //

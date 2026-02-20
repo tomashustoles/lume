@@ -1,6 +1,6 @@
 //
 //  PaywallView.swift
-//  Museum Companion
+//  Mona - Art Companion
 //
 //  Native Apple-style paywall with StoreKit 2
 //
@@ -11,6 +11,7 @@ import StoreKit
 struct PaywallView: View {
     @Environment(\.colorScheme) private var colorScheme
     @EnvironmentObject var subscriptionManager: SubscriptionManager
+    @EnvironmentObject var scanLimitManager: ScanLimitManager
     @Environment(\.dismiss) var dismiss
     
     @State private var selectedProduct: Product?
@@ -34,12 +35,35 @@ struct PaywallView: View {
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 40)
                     } else if subscriptionManager.subscriptionProducts.isEmpty {
-                        Text("Unable to load subscription options. Please check your connection and try again.")
-                            .font(.system(.subheadline))
-                            .foregroundColor(colorScheme == .dark ? Color.white.opacity(0.6) : Color.black.opacity(0.6))
-                            .multilineTextAlignment(.center)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 24)
+                        VStack(spacing: 16) {
+                            Text("Unable to load subscription options. Please check your connection and try again.")
+                                .font(.system(.subheadline))
+                                .foregroundColor(colorScheme == .dark ? Color.white.opacity(0.6) : Color.black.opacity(0.6))
+                                .multilineTextAlignment(.center)
+                            if let error = subscriptionManager.loadError {
+                                Text(error)
+                                    .font(.system(.caption))
+                                    .foregroundColor(colorScheme == .dark ? Color.white.opacity(0.5) : Color.black.opacity(0.5))
+                                    .multilineTextAlignment(.center)
+                            }
+                            Button("Retry") {
+                                Task {
+                                    await subscriptionManager.loadProducts()
+                                    if let first = subscriptionManager.subscriptionProducts.first {
+                                        selectedProduct = first
+                                    }
+                                }
+                            }
+                            .font(.system(.body, design: .default))
+                            .fontWeight(.semibold)
+                            .foregroundColor(colorScheme == .dark ? .white : .black)
+                            .padding(.vertical, 12)
+                            .padding(.horizontal, 24)
+                            .background(colorScheme == .dark ? Color.white.opacity(0.2) : Color.black.opacity(0.1))
+                            .cornerRadius(10)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 24)
                     } else {
                         productSelection
                     }
@@ -96,7 +120,7 @@ struct PaywallView: View {
                 .fontWeight(.semibold)
                 .foregroundColor(colorScheme == .dark ? .white : .black)
             
-            Text("Discover endless artworks with Lume")
+            Text("Discover endless artworks with Mona")
                 .font(.system(.title3))
                 .foregroundColor(colorScheme == .dark ? Color.white.opacity(0.6) : Color.black.opacity(0.6))
         }
@@ -166,7 +190,7 @@ struct PaywallView: View {
                     ProgressView()
                         .progressViewStyle(CircularProgressViewStyle(tint: colorScheme == .dark ? .black : .white))
                 } else {
-                    Text("Start Free Trial")
+                    Text("Upgrade to Pro")
                         .font(.system(.body, design: .default))
                         .fontWeight(.semibold)
                 }
@@ -224,6 +248,7 @@ struct PaywallView: View {
         do {
             let transaction = try await subscriptionManager.purchase(product)
             if transaction != nil {
+                scanLimitManager.resetForProUser()
                 dismiss()
             }
         } catch {
@@ -239,6 +264,7 @@ struct PaywallView: View {
         await subscriptionManager.restorePurchases()
         
         if subscriptionManager.isProUser {
+            scanLimitManager.resetForProUser()
             dismiss()
         } else {
             errorMessage = "No previous purchases found."
@@ -356,4 +382,5 @@ struct ProductCard: View {
 #Preview {
     PaywallView()
         .environmentObject(SubscriptionManager())
+        .environmentObject(ScanLimitManager())
 }

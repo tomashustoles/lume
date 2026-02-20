@@ -1,6 +1,6 @@
 //
 //  MainView.swift
-//  Lume
+//  Mona - Art Companion
 //
 //  Main app interface with camera and feed
 //

@@ -1,6 +1,6 @@
 //
 //  AppConfig.swift
-//  Lume
+//  Mona - Art Companion
 //
 //  Configuration management for API keys and other settings
 //
@@ -70,6 +70,24 @@ enum AppConfig {
         }
         
         return ""
+    }
+    
+    // MARK: - App Store URLs (required for App Review)
+    
+    /// Privacy Policy URL - set PRIVACY_POLICY_URL in Info.plist before App Store submission
+    static var privacyPolicyURL: String {
+        if let url = Bundle.main.object(forInfoDictionaryKey: "PRIVACY_POLICY_URL") as? String, !url.isEmpty {
+            return url
+        }
+        return "https://example.com/privacy" // Replace in Info.plist - required for App Review
+    }
+    
+    /// Terms of Service URL - set TERMS_OF_SERVICE_URL in Info.plist before App Store submission
+    static var termsOfServiceURL: String {
+        if let url = Bundle.main.object(forInfoDictionaryKey: "TERMS_OF_SERVICE_URL") as? String, !url.isEmpty {
+            return url
+        }
+        return "https://example.com/terms" // Replace in Info.plist - required for App Review
     }
     
     /// Clear the cached API key (for security/testing)

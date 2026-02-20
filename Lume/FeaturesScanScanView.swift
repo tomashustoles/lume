@@ -1,6 +1,6 @@
 //
 //  ScanView.swift
-//  Museum Companion
+//  Mona - Art Companion
 //
 //  Main scanning interface with camera and frame animation
 //
@@ -15,7 +15,6 @@ struct ScanView: View {
     @EnvironmentObject var scanLimitManager: ScanLimitManager
     @EnvironmentObject var historyManager: HistoryManager
     
-    @State private var showPaywall = false
     @State private var showResult = false
     @State private var cameraViewController: CameraViewController?
     @State private var isAnalyzing = false
@@ -85,6 +84,11 @@ struct ScanView: View {
                     scanCounter
                 }
                 
+                // Scan limit overlay - blocks scanning when 0 scans left
+                if !subscriptionManager.isProUser && scanLimitManager.scansRemaining == 0 {
+                    scanLimitOverlay
+                }
+                
             } else {
                 // Permission required view
                 permissionView
@@ -108,28 +112,82 @@ struct ScanView: View {
                         showResult = false
                         frozenImage = nil
                         viewModel.reset()
+                        // Show paywall after 3rd scan when user dismisses result
+                        if !subscriptionManager.isProUser && scanLimitManager.scansRemaining == 0 {
+                            viewModel.showPaywall = true
+                        }
                     },
                     onNavigateToCollection: onNavigateToCollection,
                     onNavigateToScan: onNavigateToScan
                 )
             }
         }
-        .sheet(isPresented: $showPaywall) {
+        .sheet(isPresented: Binding(
+            get: { viewModel.showPaywall },
+            set: { viewModel.showPaywall = $0 }
+        )) {
             PaywallView()
-        }
-        .alert("Scan Limit Reached", isPresented: $viewModel.showLimitReached) {
-            Button("Upgrade to Pro") {
-                showPaywall = true
-            }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("You've used all 3 daily scans. Upgrade to Pro for unlimited scanning.")
+                .environmentObject(subscriptionManager)
+                .environmentObject(scanLimitManager)
         }
         .alert("Error", isPresented: $viewModel.showError) {
             Button("OK") {}
         } message: {
             Text(viewModel.errorMessage ?? "An unknown error occurred.")
         }
+    }
+    
+    // MARK: - Scan Limit Overlay
+    
+    private var scanLimitOverlay: some View {
+        VStack(spacing: 0) {
+            Spacer()
+            
+            VStack(spacing: 24) {
+                Image(systemName: "sparkles")
+                    .font(.system(size: 44))
+                    .foregroundColor(.white)
+                
+                VStack(spacing: 8) {
+                    Text("Scan Limit Reached")
+                        .font(.custom("NewYork", size: 28))
+                        .fontWeight(.semibold)
+                        .foregroundColor(.white)
+                    
+                    Text("You've used all 3 daily scans. Upgrade to Pro for unlimited scanning.")
+                        .font(.system(.body))
+                        .foregroundColor(.white.opacity(0.9))
+                        .multilineTextAlignment(.center)
+                }
+                
+                Button {
+                    viewModel.showPaywall = true
+                } label: {
+                    HStack(spacing: 8) {
+                        Text("Upgrade to Pro")
+                            .font(.system(.body, design: .default))
+                            .fontWeight(.semibold)
+                        Image(systemName: "sparkles")
+                            .font(.system(size: 14, weight: .semibold))
+                    }
+                    .foregroundColor(.black)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(Color.white)
+                    .cornerRadius(12)
+                }
+                .padding(.horizontal, 24)
+            }
+            .padding(28)
+            .glassEffect(.regular, in: .rect(cornerRadius: 24))
+            .padding(.horizontal, 20)
+            .padding(.bottom, 120)
+            
+            Spacer()
+        }
+        .background(Color.black.opacity(0.4))
+        .ignoresSafeArea()
+        .allowsHitTesting(true)
     }
     
     // MARK: - Scan Area Overlay
@@ -194,8 +252,8 @@ struct ScanView: View {
                 .frame(width: 80, height: 80)
                 .glassEffect(.regular.interactive(), in: .circle)
             }
-            .disabled(viewModel.isProcessing || isAnalyzing)
-            .opacity((viewModel.isProcessing || isAnalyzing) ? 0.5 : 1.0)
+            .disabled(viewModel.isProcessing || isAnalyzing || (!subscriptionManager.isProUser && scanLimitManager.scansRemaining == 0))
+            .opacity((viewModel.isProcessing || isAnalyzing || (!subscriptionManager.isProUser && scanLimitManager.scansRemaining == 0)) ? 0.5 : 1.0)
             .position(x: geometry.size.width / 2, y: buttonYPosition)
         }
     }
@@ -226,8 +284,8 @@ struct ScanView: View {
                 .frame(width: 50, height: 50)
                 .glassEffect(.regular.interactive(), in: .circle)
             }
-            .disabled(viewModel.isProcessing || isAnalyzing)
-            .opacity((viewModel.isProcessing || isAnalyzing) ? 0.5 : 1.0)
+            .disabled(viewModel.isProcessing || isAnalyzing || (!subscriptionManager.isProUser && scanLimitManager.scansRemaining == 0))
+            .opacity((viewModel.isProcessing || isAnalyzing || (!subscriptionManager.isProUser && scanLimitManager.scansRemaining == 0)) ? 0.5 : 1.0)
             .position(x: safeXPosition, y: buttonYPosition)
         }
     }

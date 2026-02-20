@@ -1,6 +1,6 @@
 //
 //  HistoryManager.swift
-//  Museum Companion
+//  Mona - Art Companion
 //
 //  Manages artwork history with CloudKit sync
 //

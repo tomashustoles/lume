@@ -2,11 +2,18 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CFBundleDisplayName</key>
+	<string>Mona - Art Companion</string>
 	<!-- GEMINI_API_KEY will be injected via INFOPLIST_KEY_GEMINI_API_KEY build setting -->
 	<key>GEMINI_API_KEY</key>
 	<string>$(GEMINI_API_KEY)</string>
 	<!-- Export Compliance: App only uses standard encryption provided by Apple's OS (HTTPS/TLS, CloudKit, StoreKit) -->
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<!-- Required for App Store Connect App Review -->
+	<key>PRIVACY_POLICY_URL</key>
+	<string>https://tomashustoles.github.io/lume-privacy-policy/</string>
+	<key>TERMS_OF_SERVICE_URL</key>
+	<string>https://example.com/terms</string>
 </dict>
 </plist>

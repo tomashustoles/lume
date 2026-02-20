@@ -1,6 +1,6 @@
 //
 //  LumeApp.swift
-//  Lume
+//  Mona - Art Companion
 //
 //  Created by Tomas Hustoles on 29/1/26.
 //
@@ -42,6 +42,12 @@ struct LumeApp: App {
                         // Load products and status
                         await subscriptionManager.loadProducts()
                         await subscriptionManager.loadSubscriptionStatus()
+                        // Sync scan limits with subscription
+                        if subscriptionManager.isProUser {
+                            scanLimitManager.resetForProUser()
+                        } else {
+                            scanLimitManager.resetForFreeUserIfNeeded()
+                        }
                     }
                 
                 // Splash screen overlay (shows on every launch)

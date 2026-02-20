@@ -1,6 +1,6 @@
 //
 //  ProfileView.swift
-//  Museum Companion
+//  Mona - Art Companion
 //
 //  User profile and settings
 //
@@ -25,7 +25,7 @@ struct ProfileView: View {
                     if subscriptionManager.isProUser {
                         HStack {
                             VStack(alignment: .leading, spacing: 4) {
-                                Text("Museum Companion Pro")
+                                Text("Art Companion Pro")
                                     .font(.system(.body, design: .default))
                                     .fontWeight(.semibold)
                                 
@@ -131,10 +131,10 @@ struct ProfileView: View {
                             .foregroundColor(colorScheme == .dark ? .white : .black)
                     }
                     
-                    Link("Privacy Policy", destination: URL(string: "https://example.com/privacy")!)
+                    Link("Privacy Policy", destination: URL(string: AppConfig.privacyPolicyURL)!)
                         .foregroundColor(colorScheme == .dark ? .white : .black)
                     
-                    Link("Terms of Service", destination: URL(string: "https://example.com/terms")!)
+                    Link("Terms of Service", destination: URL(string: AppConfig.termsOfServiceURL)!)
                         .foregroundColor(colorScheme == .dark ? .white : .black)
                     
                     HStack {
@@ -151,6 +151,8 @@ struct ProfileView: View {
         }
         .sheet(isPresented: $showPaywall) {
             PaywallView()
+                .environmentObject(subscriptionManager)
+                .environmentObject(scanLimitManager)
         }
     }
 }

@@ -1,6 +1,6 @@
 //
 //  ArtworkDetailView.swift
-//  Museum Companion
+//  Mona - Art Companion
 //
 //  Detailed view of recognized artwork with Info/Story modes
 //

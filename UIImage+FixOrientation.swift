@@ -1,6 +1,6 @@
 //
 //  UIImage+FixOrientation.swift
-//  Museum Companion
+//  Mona - Art Companion
 //
 //  Extension to fix image orientation issues from camera capture
 //

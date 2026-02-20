@@ -1,6 +1,6 @@
 //
 //  DebugSettingsView.swift
-//  Lume
+//  Mona - Art Companion
 //
 //  Temporary debug view to test splash screen
 //

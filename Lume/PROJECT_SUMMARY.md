@@ -1,4 +1,4 @@
-# Museum Companion - Project Summary
+# Mona - Art Companion - Project Summary
 
 ## 🎨 What We Built
 
@@ -490,7 +490,7 @@ For questions about this codebase:
 
 ---
 
-**Museum Companion** is ready to transform how people experience art. 🎨
+**Mona - Art Companion** is ready to transform how people experience art. 🎨
 
 Built with ❤️ using SwiftUI, StoreKit 2, CloudKit, and Gemini AI.
 

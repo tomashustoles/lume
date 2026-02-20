@@ -1,6 +1,6 @@
 //
 //  CollectionView.swift
-//  Museum Companion
+//  Mona - Art Companion
 //
 //  History and favorites collection view
 //

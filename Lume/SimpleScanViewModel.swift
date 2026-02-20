@@ -1,6 +1,6 @@
 //
 //  SimpleScanViewModel.swift
-//  Lume
+//  Mona - Art Companion
 //
 //  Handles camera capture and AI recognition
 //

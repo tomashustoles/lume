@@ -1,6 +1,6 @@
 //
 //  OnboardingView.swift
-//  Museum Companion
+//  Mona - Art Companion
 //
 //  Three-screen onboarding flow
 //

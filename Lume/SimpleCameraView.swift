@@ -1,6 +1,6 @@
 //
 //  SimpleCameraView.swift
-//  Lume
+//  Mona - Art Companion
 //
 //  Camera interface with square scan area
 //

@@ -1,6 +1,6 @@
 //
 //  ArtworkFeedView.swift
-//  Lume
+//  Mona - Art Companion
 //
 //  Shows scanned artworks in a vertical feed
 //
