@@ -14,7 +14,7 @@
 	<key>PRIVACY_POLICY_URL</key>
 	<string>https://tomashustoles.github.io/lume-privacy-policy/</string>
 	<key>TERMS_OF_SERVICE_URL</key>
-	<string>https://example.com/terms</string>
+	<string>https://tomashustoles.github.io/lume-privacy-policy/eula.html</string>
 	<!-- EULA required for subscription/IAP -->
 	<key>EULA_URL</key>
 	<string>https://tomashustoles.github.io/lume-privacy-policy/eula.html</string>

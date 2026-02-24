@@ -15,7 +15,6 @@ struct ProfileView: View {
     @EnvironmentObject var historyManager: HistoryManager
     
     @State private var showPaywall = false
-    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = true
     
     var body: some View {
         NavigationStack {
@@ -102,42 +101,12 @@ struct ProfileView: View {
                     }
                 }
                 
-                // Data
-                Section("Data") {
-                    Button {
-                        Task {
-                            await historyManager.syncFromCloud()
-                        }
-                    } label: {
-                        HStack {
-                            Text("Sync with iCloud")
-                                .foregroundColor(colorScheme == .dark ? .white : .black)
-                            
-                            if historyManager.isLoading {
-                                Spacer()
-                                ProgressView()
-                            }
-                        }
-                    }
-                    .disabled(historyManager.isLoading)
-                }
-                
                 // App
                 Section("App") {
-                    Button {
-                        hasCompletedOnboarding = false
-                    } label: {
-                        Text("Show Onboarding")
-                            .foregroundColor(colorScheme == .dark ? .white : .black)
-                    }
-                    
                     Link("Privacy Policy", destination: URL(string: AppConfig.privacyPolicyURL)!)
                         .foregroundColor(colorScheme == .dark ? .white : .black)
                     
                     Link("Terms of Service", destination: URL(string: AppConfig.termsOfServiceURL)!)
-                        .foregroundColor(colorScheme == .dark ? .white : .black)
-                    
-                    Link("EULA", destination: URL(string: AppConfig.eulaURL)!)
                         .foregroundColor(colorScheme == .dark ? .white : .black)
                     
                     Link("Contact Support", destination: URL(string: "mailto:\(AppConfig.supportEmail)")!)
