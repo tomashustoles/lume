@@ -233,6 +233,12 @@ struct PaywallView: View {
                 .font(.system(.caption))
                 .foregroundColor(colorScheme == .dark ? Color.white.opacity(0.5) : Color.black.opacity(0.5))
                 .multilineTextAlignment(.center)
+            
+            if let eulaURL = URL(string: AppConfig.eulaURL) {
+                Link("End User License Agreement (EULA)", destination: eulaURL)
+                    .font(.system(.caption))
+                    .foregroundColor(colorScheme == .dark ? Color.white.opacity(0.7) : Color.black.opacity(0.7))
+            }
         }
         .frame(maxWidth: .infinity)
     }

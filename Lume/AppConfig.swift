@@ -93,6 +93,14 @@ enum AppConfig {
         return "https://example.com/terms" // Replace in Info.plist - required for App Review
     }
     
+    /// EULA (End User License Agreement) URL - set EULA_URL in Info.plist; required for subscription/IAP App Review
+    static var eulaURL: String {
+        if let url = Bundle.main.object(forInfoDictionaryKey: "EULA_URL") as? String, !url.isEmpty {
+            return url
+        }
+        return "https://example.com/eula" // Replace in Info.plist - required for App Review
+    }
+    
     /// Clear the cached API key (for security/testing)
     static func clearCachedAPIKey() {
         UserDefaults.standard.removeObject(forKey: cachedKeyUserDefaultsKey)

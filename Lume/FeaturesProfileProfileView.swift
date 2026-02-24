@@ -137,6 +137,9 @@ struct ProfileView: View {
                     Link("Terms of Service", destination: URL(string: AppConfig.termsOfServiceURL)!)
                         .foregroundColor(colorScheme == .dark ? .white : .black)
                     
+                    Link("EULA", destination: URL(string: AppConfig.eulaURL)!)
+                        .foregroundColor(colorScheme == .dark ? .white : .black)
+                    
                     Link("Contact Support", destination: URL(string: "mailto:\(AppConfig.supportEmail)")!)
                         .foregroundColor(colorScheme == .dark ? .white : .black)
                     
