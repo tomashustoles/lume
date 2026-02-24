@@ -79,7 +79,7 @@ struct ProfileView: View {
                             
                             Spacer()
                             
-                            Text("\(scanLimitManager.scansRemaining) / 3")
+                            Text(scanLimitManager.scansRemaining == Int.max ? "Unlimited" : "\(scanLimitManager.scansRemaining) / 3")
                                 .foregroundColor(.secondary)
                         }
                     }

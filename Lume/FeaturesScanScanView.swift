@@ -79,8 +79,8 @@ struct ScanView: View {
                 // Photo picker button (bottom left corner)
                 photoPickerButton
                 
-                // Scan counter
-                if !subscriptionManager.isProUser {
+                // Scan counter (hide for Pro users and when unlimited - avoids showing Int.max during subscription race)
+                if !subscriptionManager.isProUser && scanLimitManager.scansRemaining != Int.max {
                     scanCounter
                 }
                 
