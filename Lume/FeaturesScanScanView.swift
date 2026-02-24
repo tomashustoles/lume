@@ -260,6 +260,9 @@ struct ScanView: View {
                 .padding(.vertical, 12)
                 .glassEffect(.regular, in: .capsule)
                 .padding(.trailing, 20)
+                .onTapGesture {
+                    viewModel.showPaywall = true
+                }
             }
             .padding(.top, 60)
             
